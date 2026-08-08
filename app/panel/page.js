@@ -5,10 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { uyelikAktif, SUNUCU } from "../../lib/ayarlar";
 import { oturumOku, cikisYap } from "../../lib/kimlik";
+import { siparislerimiGetir, adminMi } from "../../lib/veritabani";
+
+const DURUM_ETIKET = {
+  bekliyor: { metin: "Onay bekliyor", renk: "#f0a63c" },
+  teslim: { metin: "Teslim edildi", renk: "#5fbf8b" },
+  iptal: { metin: "İptal edildi", renk: "#ef5a6f" },
+};
+
+function tarihYaz(ham) {
+  if (!ham) return "—";
+  return new Date(ham).toLocaleDateString("tr-TR");
+}
 
 export default function PanelSayfasi() {
   const router = useRouter();
   const [oturum, setOturum] = useState(undefined);
+  const [siparisler, setSiparisler] = useState([]);
+  const [admin, setAdmin] = useState(false);
+  const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
     if (!uyelikAktif) return;
@@ -18,6 +33,18 @@ export default function PanelSayfasi() {
       return;
     }
     setOturum(o);
+
+    (async () => {
+      try {
+        const [s, a] = await Promise.all([siparislerimiGetir(), adminMi()]);
+        setSiparisler(s || []);
+        setAdmin(a);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setYukleniyor(false);
+      }
+    })();
   }, [router]);
 
   if (!uyelikAktif) {
@@ -44,9 +71,8 @@ export default function PanelSayfasi() {
 
   const nick = oturum.kullanici?.user_metadata?.nick || "—";
   const eposta = oturum.kullanici?.email || "—";
-  const kayitTarihi = oturum.kullanici?.created_at
-    ? new Date(oturum.kullanici.created_at).toLocaleDateString("tr-TR")
-    : "—";
+  const kayitTarihi = tarihYaz(oturum.kullanici?.created_at);
+  const aktifPaketler = siparisler.filter((s) => s.durum === "teslim");
 
   const cikis = () => {
     cikisYap();
@@ -63,14 +89,19 @@ export default function PanelSayfasi() {
 
         <div className="panel-ust">
           <div>
-            <span className="etiket" style={{ display: "block", fontFamily: "var(--mono)", fontSize: "0.62rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
-              Oyun içi nick
-            </span>
+            <span className="etiket">Oyun içi nick</span>
             <span className="panel-nick">{nick}</span>
           </div>
-          <button className="dugme" onClick={cikis}>
-            Çıkış yap
-          </button>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {admin && (
+              <Link href="/yonetim" className="dugme dugme-vurgu">
+                Yönetim paneli
+              </Link>
+            )}
+            <button className="dugme" onClick={cikis}>
+              Çıkış yap
+            </button>
+          </div>
         </div>
 
         <div className="panel-kutular">
@@ -83,26 +114,73 @@ export default function PanelSayfasi() {
             <span className="deger">{kayitTarihi}</span>
           </div>
           <div className="panel-kutu">
-            <span className="etiket">Aktif paket</span>
-            <span className="deger">Yok</span>
+            <span className="etiket">Aktif paketin</span>
+            <span className="deger" style={{ color: aktifPaketler.length ? "var(--ok)" : undefined }}>
+              {aktifPaketler.length ? aktifPaketler.map((s) => s.paket_ad).join(", ") : "Yok"}
+            </span>
           </div>
           <div className="panel-kutu">
             <span className="etiket">Sunucu adresi</span>
-            <span className="deger" style={{ fontFamily: "var(--mono)" }}>
-              {SUNUCU.adres}
-            </span>
+            <span className="deger mono">{SUNUCU.adres}</span>
           </div>
         </div>
 
-        <div className="discord-serit" style={{ marginTop: 30 }}>
-          <div>
-            <h2 className="baslik-m">Henüz paketin yok</h2>
-            <p>Mağazadan bir paket alıp oyun içi ayrıcalıkların kilidini açabilirsin.</p>
+        <h2 className="baslik-m" style={{ margin: "48px 0 20px" }}>
+          Siparişlerim
+        </h2>
+
+        {yukleniyor ? (
+          <p className="sonuk">Yükleniyor…</p>
+        ) : siparisler.length === 0 ? (
+          <div className="discord-serit">
+            <div>
+              <h3 className="baslik-m">Henüz siparişin yok</h3>
+              <p>Mağazadan bir paket alıp oyun içi ayrıcalıkların kilidini açabilirsin.</p>
+            </div>
+            <Link href="/magaza" className="dugme dugme-vurgu">
+              Mağazaya git
+            </Link>
           </div>
-          <Link href="/magaza" className="dugme dugme-vurgu">
-            Mağazaya git
-          </Link>
-        </div>
+        ) : (
+          <div className="tablo-sar">
+            <table className="tablo">
+              <thead>
+                <tr>
+                  <th>Paket</th>
+                  <th>Tutar</th>
+                  <th>Tarih</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {siparisler.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <strong>{s.paket_ad}</strong>
+                    </td>
+                    <td className="mono">{s.fiyat}₺</td>
+                    <td className="sonuk kucuk">{tarihYaz(s.olusturma)}</td>
+                    <td>
+                      <span className="rozet" style={{ color: DURUM_ETIKET[s.durum]?.renk }}>
+                        {DURUM_ETIKET[s.durum]?.metin || s.durum}
+                      </span>
+                      {s.aciklama && (
+                        <>
+                          <br />
+                          <span className="sonuk kucuk">{s.aciklama}</span>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <p className="sonuk kucuk" style={{ marginTop: 22 }}>
+          Ödemeni yaptıysan ve siparişin hâlâ onay bekliyorsa Discord'dan destek talebi aç.
+        </p>
       </div>
     </section>
   );

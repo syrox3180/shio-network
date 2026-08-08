@@ -1,8 +1,52 @@
-import { SUNUCU } from "../lib/ayarlar";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { SUNUCU, uyelikAktif } from "../lib/ayarlar";
+import { oturumOku } from "../lib/kimlik";
+import { siparisOlustur } from "../lib/veritabani";
 
 export default function PaketKarti({ paket }) {
+  const router = useRouter();
+  const [durum, setDurum] = useState("hazir"); // hazir | bekliyor | tamam | hata
+  const [mesaj, setMesaj] = useState("");
+
   const link = paket.satinAlLinki || SUNUCU.discord;
-  const butonMetni = paket.satinAlLinki ? "Satın al" : "Discord'dan al";
+
+  const satinAl = async () => {
+    // Üyelik kapalıysa eski davranış: doğrudan linke git
+    if (!uyelikAktif) {
+      window.open(link, "_blank", "noopener");
+      return;
+    }
+
+    const oturum = oturumOku();
+    if (!oturum) {
+      router.push("/giris");
+      return;
+    }
+
+    setDurum("bekliyor");
+    setMesaj("");
+
+    try {
+      await siparisOlustur(paket);
+      setDurum("tamam");
+      setMesaj("Siparişin oluşturuldu. Ödeme sayfası açılıyor…");
+      window.open(link, "_blank", "noopener");
+    } catch (err) {
+      setDurum("hata");
+      setMesaj("Sipariş oluşturulamadı. Tekrar dener misin?");
+      console.error(err);
+    }
+  };
+
+  const butonMetni = () => {
+    if (durum === "bekliyor") return "Oluşturuluyor";
+    if (durum === "tamam") return "Sipariş verildi";
+    if (!uyelikAktif) return paket.satinAlLinki ? "Satın al" : "Discord'dan al";
+    return paket.satinAlLinki ? "Satın al" : "Sipariş ver";
+  };
 
   return (
     <div className={paket.oneCikan ? "paket paket-one" : "paket"}>
@@ -21,9 +65,7 @@ export default function PaketKarti({ paket }) {
       <p className="paket-tek">Tek seferlik · Süresiz</p>
 
       <ul className="paket-liste">
-        {paket.devami && (
-          <li className="paket-devam">{paket.devami} paketindeki her şey</li>
-        )}
+        {paket.devami && <li className="paket-devam">{paket.devami} paketindeki her şey</li>}
         {paket.ayricaliklar.map((madde) => (
           <li key={madde} style={{ "--isaret": paket.renk }}>
             {madde}
@@ -31,14 +73,19 @@ export default function PaketKarti({ paket }) {
         ))}
       </ul>
 
-      <a
-        href={link}
-        target="_blank"
-        rel="noreferrer"
+      <button
+        onClick={satinAl}
+        disabled={durum === "bekliyor"}
         className={paket.oneCikan ? "dugme dugme-vurgu dugme-genis" : "dugme dugme-genis"}
       >
-        {butonMetni}
-      </a>
+        {butonMetni()}
+      </button>
+
+      {mesaj && (
+        <p className="paket-mesaj" style={{ color: durum === "hata" ? "var(--err)" : "var(--ok)" }}>
+          {mesaj}
+        </p>
+      )}
     </div>
   );
 }

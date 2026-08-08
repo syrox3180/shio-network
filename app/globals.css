@@ -907,3 +907,206 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Sekmeler ve filtreler ---------- */
+.sekmeler {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sekme {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 9px 16px;
+  color: var(--muted);
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 110%;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.sekme:hover {
+  color: var(--text);
+}
+
+.sekme.aktif {
+  background: var(--rock-2);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.filtreler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filtre {
+  background: var(--rock);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 7px 16px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.filtre:hover {
+  color: var(--text);
+  border-color: var(--line);
+}
+
+.filtre.aktif {
+  background: var(--amethyst);
+  border-color: var(--amethyst);
+  color: #16091f;
+}
+
+/* ---------- Tablo ---------- */
+.tablo-sar {
+  overflow-x: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--rock);
+}
+
+.tablo {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.tablo th {
+  text-align: left;
+  padding: 15px 18px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 400;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+}
+
+.tablo td {
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+  font-size: 0.92rem;
+}
+
+.tablo tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tablo tbody tr:hover {
+  background: var(--rock-2);
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.kucuk {
+  font-size: 0.78rem;
+}
+
+.rozet {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.islem-butonlar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mini-dugme {
+  background: var(--rock-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px 11px;
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+}
+
+.mini-dugme:hover {
+  border-color: var(--amethyst);
+}
+
+.mini-dugme.yesil {
+  border-color: rgba(95, 191, 139, 0.45);
+  color: var(--ok);
+}
+
+.mini-dugme.yesil:hover {
+  background: rgba(95, 191, 139, 0.14);
+  border-color: var(--ok);
+}
+
+.mini-dugme.kirmizi {
+  border-color: rgba(239, 90, 111, 0.45);
+  color: var(--err);
+}
+
+.mini-dugme.kirmizi:hover {
+  background: rgba(239, 90, 111, 0.14);
+  border-color: var(--err);
+}
+
+.bos-durum {
+  padding: 54px 24px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.bos-durum p {
+  margin: 0;
+}
+
+.paket-mesaj {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.panel-ust .etiket {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+button.dugme:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.dugme:disabled:hover {
+  transform: none;
+}

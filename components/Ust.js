@@ -1,11 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { SUNUCU, uyelikAktif } from "../lib/ayarlar";
+import { oturumOku } from "../lib/kimlik";
+import { adminMi } from "../lib/veritabani";
 
 export default function Ust() {
   const [acik, setAcik] = useState(false);
+  const [girisli, setGirisli] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const yol = usePathname();
+
+  useEffect(() => {
+    if (!uyelikAktif) return;
+    const oturum = oturumOku();
+    setGirisli(Boolean(oturum));
+    if (oturum) {
+      adminMi().then(setAdmin).catch(() => setAdmin(false));
+    } else {
+      setAdmin(false);
+    }
+  }, [yol]);
+
   const kapat = () => setAcik(false);
 
   return (
@@ -32,11 +50,30 @@ export default function Ust() {
           <Link href="/magaza" onClick={kapat}>
             Mağaza
           </Link>
-          {uyelikAktif && (
-            <Link href="/panel" onClick={kapat}>
-              Hesabım
-            </Link>
-          )}
+
+          {uyelikAktif &&
+            (girisli ? (
+              <>
+                <Link href="/panel" onClick={kapat}>
+                  Hesabım
+                </Link>
+                {admin && (
+                  <Link href="/yonetim" onClick={kapat}>
+                    Yönetim
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link href="/giris" onClick={kapat}>
+                  Giriş yap
+                </Link>
+                <Link href="/kayit" onClick={kapat}>
+                  Kayıt ol
+                </Link>
+              </>
+            ))}
+
           <a href={SUNUCU.discord} target="_blank" rel="noreferrer" className="dugme dugme-mor" onClick={kapat}>
             Discord
           </a>
