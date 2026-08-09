@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { tokenAl, kullaniciAl } from "../../../../lib/oturum-sunucu";
+import { ikiFaktorGetir, ikiFaktorJetonGecerli } from "../../../../lib/guvenlik";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,9 +42,22 @@ export async function GET() {
     console.error("Profil okunamadi:", err);
   }
 
+  let ikiFaktorKurulu = false;
+  let ikiFaktorDogrulandi = true;
+
+  if (admin) {
+    const kayit = await ikiFaktorGetir(kullanici.id);
+    ikiFaktorKurulu = Boolean(kayit?.aktif);
+    if (ikiFaktorKurulu) {
+      ikiFaktorDogrulandi = ikiFaktorJetonGecerli(cookies().get("sn_2fa")?.value, kullanici.id);
+    }
+  }
+
   return Response.json({
     girisli: true,
     admin,
+    ikiFaktorKurulu,
+    ikiFaktorDogrulandi,
     kullanici: {
       id: kullanici.id,
       eposta: kullanici.email,

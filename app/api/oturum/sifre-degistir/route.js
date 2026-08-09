@@ -1,4 +1,5 @@
-import { tokenAl, kullaniciAl, authIstek, hataCevir, hizSiniri, istekIp } from "../../../../lib/oturum-sunucu";
+import { tokenAl, kullaniciAl, authIstek, hataCevir } from "../../../../lib/oturum-sunucu";
+import { kaynakGecerli, istekIp, hizSiniri, olayKaydet, discordUyari } from "../../../../lib/guvenlik";
 import { sifreKontrol } from "../../../../lib/sifre";
 
 export const runtime = "nodejs";
@@ -9,13 +10,17 @@ const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export async function POST(request) {
   try {
+    if (!kaynakGecerli(request)) {
+      return Response.json({ hata: "Gecersiz istek." }, { status: 403 });
+    }
+
     const kullanici = await kullaniciAl();
     if (!kullanici?.id) {
       return Response.json({ hata: "Once giris yapmalisin." }, { status: 401 });
     }
 
     const ip = istekIp(request);
-    const sinir = hizSiniri(`degistir:${ip}`, 8, 30 * 60 * 1000);
+    const sinir = await hizSiniri(`degistir:${ip}`, 8, 1800, 30);
     if (!sinir.izin) {
       return Response.json({ hata: "Cok fazla deneme. Biraz sonra tekrar dene." }, { status: 429 });
     }
@@ -32,6 +37,9 @@ export async function POST(request) {
     });
 
     if (!dogrulama.ok) {
+      await olayKaydet("sifre_degistirme_basarisiz", {
+        kullaniciId: kullanici.id, eposta: kullanici.email, ip,
+      });
       return Response.json({ hata: "Mevcut sifren hatali." }, { status: 401 });
     }
 
@@ -54,6 +62,11 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    await olayKaydet("sifre_degistirildi", {
+      kullaniciId: kullanici.id, eposta: kullanici.email, ip,
+    });
+    await discordUyari("Sifre degistirildi", `**${kullanici.email}** sifresini degistirdi.`, 0x5fbf8b);
 
     return Response.json({ tamam: true });
   } catch (err) {

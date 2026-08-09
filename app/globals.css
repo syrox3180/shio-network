@@ -1544,3 +1544,42 @@ button.dugme:disabled:hover {
 .guvenlik-bas h3 {
   margin: 0;
 }
+
+/* ---------- İki adımlı doğrulama ---------- */
+.kod-alani {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.kurulum-liste {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.8;
+}
+
+.kurulum-liste li {
+  margin-bottom: 10px;
+}
+
+.kurulum-liste strong {
+  color: var(--text);
+}
+
+.gizli-anahtar {
+  display: block;
+  margin: 10px 0 4px;
+  padding: 13px 15px;
+  background: var(--void);
+  border: 1px dashed var(--amber);
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 1rem;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  word-break: break-all;
+  user-select: all;
+}

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { uyelikAktif } from "../../lib/ayarlar";
 import { benKim } from "../../lib/kimlik";
+import IkiFaktor from "../../components/IkiFaktor";
 import { tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla } from "../../lib/veritabani";
 
 const DURUM_ETIKET = {
@@ -25,7 +26,8 @@ function tarihYaz(ham) {
 
 export default function YonetimSayfasi() {
   const router = useRouter();
-  const [yetki, setYetki] = useState("kontrol"); // kontrol | yok | var
+  const [yetki, setYetki] = useState("kontrol"); // kontrol | yok | var | 2fa
+  const [ikiFaktor, setIkiFaktor] = useState({ kurulu: false, dogrulandi: true });
   const [sekme, setSekme] = useState("siparisler");
   const [siparisler, setSiparisler] = useState([]);
   const [uyeler, setUyeler] = useState([]);
@@ -60,6 +62,17 @@ export default function YonetimSayfasi() {
         setYetki("yok");
         return;
       }
+
+      setIkiFaktor({
+        kurulu: Boolean(oturum.ikiFaktorKurulu),
+        dogrulandi: oturum.ikiFaktorDogrulandi !== false,
+      });
+
+      if (oturum.ikiFaktorKurulu && oturum.ikiFaktorDogrulandi === false) {
+        setYetki("2fa");
+        return;
+      }
+
       setYetki("var");
       verileriCek();
     })();
@@ -121,6 +134,20 @@ export default function YonetimSayfasi() {
       <div className="kapsayici" style={{ padding: "90px 24px" }}>
         <p className="sonuk">Yetki kontrol ediliyor…</p>
       </div>
+    );
+  }
+
+  if (yetki === "2fa") {
+    return (
+      <IkiFaktor
+        kurulu
+        dogrulandi={false}
+        onTamam={() => {
+          setYetki("var");
+          setIkiFaktor({ kurulu: true, dogrulandi: true });
+          verileriCek();
+        }}
+      />
     );
   }
 
@@ -198,6 +225,12 @@ export default function YonetimSayfasi() {
             onClick={() => setSekme("uyeler")}
           >
             Üyeler ({uyeler.length})
+          </button>
+          <button
+            className={sekme === "guvenlik" ? "sekme aktif" : "sekme"}
+            onClick={() => setSekme("guvenlik")}
+          >
+            Güvenlik
           </button>
           <button className="dugme" style={{ marginLeft: "auto" }} onClick={verileriCek}>
             Yenile
@@ -324,6 +357,26 @@ export default function YonetimSayfasi() {
                 </table>
               </div>
             )}
+          </>
+        )}
+
+        {!yukleniyor && sekme === "guvenlik" && (
+          <>
+            <IkiFaktor
+              kurulu={ikiFaktor.kurulu}
+              dogrulandi={ikiFaktor.dogrulandi}
+              onTamam={async () => {
+                const o = await benKim();
+                setIkiFaktor({
+                  kurulu: Boolean(o.ikiFaktorKurulu),
+                  dogrulandi: o.ikiFaktorDogrulandi !== false,
+                });
+              }}
+            />
+            <p className="sonuk kucuk" style={{ marginTop: 20 }}>
+              Güvenlik olayları Supabase → Table Editor → <strong>guvenlik_kayitlari</strong> tablosunda
+              tutuluyor. Başarısız girişler, şifre değişiklikleri ve kredi düzenlemeleri burada görünür.
+            </p>
           </>
         )}
 

@@ -1,4 +1,5 @@
-import { authIstek, oturumuYaz, hataCevir, hizSiniri, istekIp } from "../../../../lib/oturum-sunucu";
+import { authIstek, oturumuYaz, hataCevir } from "../../../../lib/oturum-sunucu";
+import { kaynakGecerli, istekIp, hizSiniri, olayKaydet, turnstileDogrula, turnstileAktif } from "../../../../lib/guvenlik";
 import { sifreKontrol, nickKontrol } from "../../../../lib/sifre";
 
 export const runtime = "nodejs";
@@ -9,8 +10,12 @@ const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export async function POST(request) {
   try {
+    if (!kaynakGecerli(request)) {
+      return Response.json({ hata: "Gecersiz istek." }, { status: 403 });
+    }
+
     const ip = istekIp(request);
-    const sinir = hizSiniri(`kayit:${ip}`, 5, 60 * 60 * 1000);
+    const sinir = await hizSiniri(`kayit:${ip}`, 5, 3600, 60);
     if (!sinir.izin) {
       return Response.json(
         { hata: `Çok fazla kayıt denemesi. ${sinir.kalanDakika} dakika sonra tekrar dene.` },
@@ -18,7 +23,12 @@ export async function POST(request) {
       );
     }
 
-    const { eposta, sifre, nick } = await request.json();
+    const { eposta, sifre, nick, turnstile } = await request.json();
+
+    if (turnstileAktif && !(await turnstileDogrula(turnstile, ip))) {
+      return Response.json({ hata: "Guvenlik dogrulamasi basarisiz. Sayfayi yenile." }, { status: 400 });
+    }
+
     const temizNick = String(nick || "").trim();
     const temizEposta = String(eposta || "").trim().toLowerCase();
 
@@ -55,6 +65,8 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    await olayKaydet("kayit", { eposta: temizEposta, ip, detay: { nick: temizNick } });
 
     if (veri.access_token) {
       oturumuYaz(veri);

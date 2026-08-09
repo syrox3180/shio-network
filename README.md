@@ -343,6 +343,74 @@ Yönetici kredi düzenlemeleri `kredi_hareketleri` tablosuna kaydediliyor: kim, 
 
 ---
 
+## İleri güvenlik katmanı
+
+### Kurulum
+
+**1.** Supabase → SQL Editor → **GUVENLIK-PRO.sql** dosyasını çalıştır.
+
+**2.** Vercel → Settings → Environment Variables. Zorunlu olan:
+
+| Key | Value |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → API Keys → Legacy → `service_role` |
+
+İsteğe bağlı olanlar:
+
+| Key | Ne işe yarar |
+|---|---|
+| `DISCORD_GUVENLIK_WEBHOOK` | Şüpheli olaylar Discord kanalına düşer |
+| `TURNSTILE_SECRET_KEY` | Bot koruması (Cloudflare Turnstile gizli anahtarı) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Turnstile açık anahtarı |
+| `OTURUM_IMZA_ANAHTARI` | 2FA çerezini imzalar. Rastgele uzun bir metin yaz |
+
+Sonra **Deployments → ⋯ → Redeploy**.
+
+### Discord bildirimi kurmak
+
+Discord'da bir kanal aç → Kanal ayarları → **Entegrasyonlar → Webhook'lar → Yeni Webhook** → URL'yi kopyala → `DISCORD_GUVENLIK_WEBHOOK` olarak Vercel'e ekle.
+
+Şu olaylarda bildirim gelir: hesap kilitlenmesi, yeni konumdan giriş, şifre değişikliği, 2FA açma/kapatma.
+
+### Yönetici iki adımlı doğrulama
+
+Yönetim paneli → **Güvenlik** sekmesi → **Kur**. Telefonuna Google Authenticator indir, ekrandaki anahtarı gir, çıkan kodu yaz.
+
+Kurduktan sonra yönetim paneline her girişte 6 haneli kod istenir. Şifren çalınsa bile telefonun olmadan panele girilemez.
+
+> Kurulum anahtarını bir yere not et. Telefonunu kaybedersen Supabase → Table Editor → `yonetici_2fa` tablosundan kaydını silerek sıfırlayabilirsin.
+
+### Neler eklendi
+
+**Tarayıcı seviyesinde koruma (CSP)**
+Tarayıcıya "sadece kendi sunucumdan gelen kodu çalıştır" talimatı veriliyor. Siteye bir şekilde zararlı kod sokulsa bile tarayıcı çalıştırmaz. Ayrıca site başka bir sayfaya çerçeve içinde gömülemiyor (tıklama hırsızlığına karşı) ve tarayıcı kamera, mikrofon, konum izinlerini tamamen kapatıyor.
+
+**CSRF koruması**
+Başka bir siteden gönderilen istekler reddediliyor. Test edildi: sahte kaynaktan gelen giriş isteği 403 dönüyor.
+
+**Kalıcı hız sınırlama**
+Deneme sayaçları artık veritabanında. Sunucu yeniden başlasa da sayaç sıfırlanmıyor — önceki sürümde saldırgan bunu atlatabilirdi. Hesaba 6, IP'ye 20 deneme; aşılırsa 15 dakika kilit.
+
+**Güvenlik günlüğü**
+Başarısız girişler, şifre değişiklikleri, kredi düzenlemeleri, 2FA olayları `guvenlik_kayitlari` tablosuna yazılıyor. 90 günden eskiler `select public.guvenlik_temizle();` ile silinebilir.
+
+**Yeni konum tespiti**
+Hesabına daha önce görülmemiş bir bağlantıdan giriş yapılırsa Discord'a bildirim gider. IP'ler açık değil, özetlenmiş halde saklanıyor.
+
+**Bot koruması**
+Cloudflare Turnstile desteği hazır. Anahtarları girersen giriş ve kayıt formlarında devreye girer, girmezsen sistem normal çalışır.
+
+### Bilinen sınırlar
+
+Dürüst olmak gerekirse birkaç şey hâlâ dışarıda:
+
+- **E-posta doğrulaması kapalı.** Açmak için SMTP kurulumu gerekiyor (Resend, Brevo ücretsiz).
+- **Sızmış şifre kontrolü** Supabase Pro özelliği, ücretsiz planda yok.
+- **DDoS koruması** Vercel'in ücretsiz katmanında sınırlı. Ciddi bir saldırıda Cloudflare önüne almak gerekir.
+- **En zayıf halka hâlâ sensin.** Vercel ve Supabase hesaplarında 2FA açmadıysan yukarıdakilerin hiçbirinin önemi yok.
+
+---
+
 ## 5. Bilgisayarında çalıştırma (isteğe bağlı)
 
 ```bash
