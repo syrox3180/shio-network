@@ -2,6 +2,7 @@ import "./globals.css";
 import { SUNUCU } from "../lib/ayarlar";
 import Ust from "../components/Ust";
 import Alt from "../components/Alt";
+import Arkaplan from "../components/Arkaplan";
 
 export const metadata = {
   title: `${SUNUCU.ad} — ${SUNUCU.slogan}`,
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <Arkaplan />
         <Ust />
         <main>{children}</main>
         <Alt />

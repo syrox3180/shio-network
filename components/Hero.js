@@ -1,53 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SUNUCU } from "../lib/ayarlar";
-
-/* Arka planda kazılıyormuş gibi rastgele yanan blok ızgarası */
-function BlokIzgara() {
-  const ref = useRef(null);
-  const [bloklar, setBloklar] = useState(0);
-
-  useEffect(() => {
-    const hesapla = () => {
-      const el = ref.current;
-      if (!el) return;
-      const sutun = Math.ceil(el.offsetWidth / 58);
-      const satir = Math.ceil(el.offsetHeight / 58);
-      setBloklar(sutun * satir);
-    };
-    hesapla();
-    window.addEventListener("resize", hesapla);
-    return () => window.removeEventListener("resize", hesapla);
-  }, []);
-
-  useEffect(() => {
-    if (!bloklar) return;
-    const azMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (azMotion) return;
-
-    const zamanlayici = setInterval(() => {
-      const el = ref.current;
-      if (!el) return;
-      const cocuklar = el.children;
-      if (!cocuklar.length) return;
-      const hedef = cocuklar[Math.floor(Math.random() * cocuklar.length)];
-      hedef.classList.add("parla");
-      setTimeout(() => hedef.classList.remove("parla"), 1400);
-    }, 260);
-
-    return () => clearInterval(zamanlayici);
-  }, [bloklar]);
-
-  return (
-    <div className="izgara" ref={ref} aria-hidden="true">
-      {Array.from({ length: bloklar }).map((_, i) => (
-        <div className="blok" key={i} />
-      ))}
-    </div>
-  );
-}
 
 /* Tıklayınca kopyalanan, blok gibi "kırılan" IP kutusu */
 function IpKutusu() {
@@ -127,7 +82,6 @@ function DurumKutusu() {
 export default function Hero() {
   return (
     <section className="hero">
-      <BlokIzgara />
       <div className="kapsayici hero-ic">
         <p className="gozkasi">Türk boxmining sunucusu · {SUNUCU.surum}</p>
 

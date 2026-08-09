@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { uyelikAktif } from "../../lib/ayarlar";
 import { oturumOku } from "../../lib/kimlik";
-import { adminMi, tumSiparisler, siparisGuncelle, uyeleriGetir } from "../../lib/veritabani";
+import { adminMi, tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla } from "../../lib/veritabani";
 
 const DURUM_ETIKET = {
   bekliyor: { metin: "Bekliyor", renk: "#f0a63c" },
@@ -82,6 +82,27 @@ export default function YonetimSayfasi() {
     }
   };
 
+  const krediDegistir = async (uye) => {
+    const girdi = window.prompt(
+      `${uye.nick} için kredi ekle veya çıkar.\n\nEklemek için: 100\nÇıkarmak için: -50\n\nMevcut bakiye: ${uye.kredi ?? 0}`,
+      ""
+    );
+    if (girdi === null) return;
+
+    const miktar = parseInt(girdi, 10);
+    if (Number.isNaN(miktar) || miktar === 0) {
+      alert("Geçerli bir sayı yaz.");
+      return;
+    }
+
+    try {
+      const yeni = await krediAyarla(uye.id, miktar);
+      setUyeler((liste) => liste.map((u) => (u.id === uye.id ? { ...u, kredi: yeni } : u)));
+    } catch (err) {
+      alert(err.message || "Kredi güncellenemedi.");
+    }
+  };
+
   if (!uyelikAktif) {
     return (
       <div className="form-sayfa">
@@ -155,6 +176,12 @@ export default function YonetimSayfasi() {
             <span className="deger" style={{ fontSize: "1.6rem" }}>{ciro}₺</span>
           </div>
           <div className="panel-kutu">
+            <span className="etiket">Dağıtılan kredi</span>
+            <span className="deger" style={{ fontSize: "1.6rem", color: "var(--amber)" }}>
+              {uyeler.reduce((t, u) => t + (u.kredi || 0), 0)} 🪙
+            </span>
+          </div>
+          <div className="panel-kutu">
             <span className="etiket">Kayıtlı üye</span>
             <span className="deger" style={{ fontSize: "1.6rem" }}>{uyeler.length}</span>
           </div>
@@ -211,7 +238,8 @@ export default function YonetimSayfasi() {
                     <tr>
                       <th>#</th>
                       <th>Nick</th>
-                      <th>Paket</th>
+                      <th>Ürün</th>
+                      <th>Ödeme</th>
                       <th>Tutar</th>
                       <th>Tarih</th>
                       <th>Durum</th>
@@ -227,7 +255,26 @@ export default function YonetimSayfasi() {
                           <br />
                           <span className="sonuk kucuk">{s.eposta}</span>
                         </td>
-                        <td>{s.paket_ad}</td>
+                        <td>
+                          {s.tur === "kredi" ? (
+                            <span style={{ color: "var(--amber)" }}>🪙 {s.paket_ad}</span>
+                          ) : (
+                            s.paket_ad
+                          )}
+                        </td>
+                        <td>
+                          {s.odeme === "kredi" ? (
+                            <span className="rozet" style={{ color: "var(--amethyst)" }}>
+                              Kredi
+                            </span>
+                          ) : s.odendi ? (
+                            <span className="rozet" style={{ color: "var(--ok)" }}>
+                              ✓ Ödendi
+                            </span>
+                          ) : (
+                            <span className="rozet sonuk">Bekliyor</span>
+                          )}
+                        </td>
                         <td className="mono">{s.fiyat}₺</td>
                         <td className="sonuk kucuk">{tarihYaz(s.olusturma)}</td>
                         <td>
@@ -289,6 +336,7 @@ export default function YonetimSayfasi() {
                   <th>Nick</th>
                   <th>E-posta</th>
                   <th>Kayıt tarihi</th>
+                  <th>Kredi</th>
                   <th>Siparişi</th>
                 </tr>
               </thead>
@@ -303,6 +351,16 @@ export default function YonetimSayfasi() {
                       </td>
                       <td className="sonuk kucuk">{u.eposta}</td>
                       <td className="sonuk kucuk">{tarihYaz(u.kayit_tarihi)}</td>
+                      <td>
+                        <div className="kredi-hucre">
+                          <span className="mono" style={{ color: "var(--amber)" }}>
+                            {u.kredi ?? 0} 🪙
+                          </span>
+                          <button className="mini-dugme" onClick={() => krediDegistir(u)}>
+                            Düzenle
+                          </button>
+                        </div>
+                      </td>
                       <td>
                         {teslimEdilen.length > 0 ? (
                           <span style={{ color: "var(--ok)" }}>

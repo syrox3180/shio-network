@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { uyelikAktif, SUNUCU } from "../../lib/ayarlar";
 import { oturumOku, cikisYap } from "../../lib/kimlik";
-import { siparislerimiGetir, adminMi } from "../../lib/veritabani";
+import { siparislerimiGetir, adminMi, profilimiGetir } from "../../lib/veritabani";
 
 const DURUM_ETIKET = {
   bekliyor: { metin: "Onay bekliyor", renk: "#f0a63c" },
@@ -23,6 +23,7 @@ export default function PanelSayfasi() {
   const [oturum, setOturum] = useState(undefined);
   const [siparisler, setSiparisler] = useState([]);
   const [admin, setAdmin] = useState(false);
+  const [kredi, setKredi] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
@@ -36,9 +37,10 @@ export default function PanelSayfasi() {
 
     (async () => {
       try {
-        const [s, a] = await Promise.all([siparislerimiGetir(), adminMi()]);
+        const [s, a, pr] = await Promise.all([siparislerimiGetir(), adminMi(), profilimiGetir()]);
         setSiparisler(s || []);
         setAdmin(a);
+        setKredi(pr?.kredi ?? 0);
       } catch (err) {
         console.error(err);
       } finally {
@@ -105,6 +107,12 @@ export default function PanelSayfasi() {
         </div>
 
         <div className="panel-kutular">
+          <div className="panel-kutu panel-kredi">
+            <span className="etiket">Kredi bakiyen</span>
+            <span className="deger" style={{ fontSize: "1.7rem", color: "var(--amber)" }}>
+              {kredi === null ? "…" : kredi} 🪙
+            </span>
+          </div>
           <div className="panel-kutu">
             <span className="etiket">E-posta</span>
             <span className="deger">{eposta}</span>

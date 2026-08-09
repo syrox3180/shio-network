@@ -2,7 +2,7 @@
 
 Next.js ile yazılmış, Vercel'de ücretsiz yayınlanabilen Minecraft sunucu sitesi.
 
-**Sayfalar:** Ana sayfa · Mağaza · Kayıt ol · Giriş yap · Hesabım · Yönetim paneli
+**Sayfalar:** Ana sayfa · Mağaza (VIP + kredi) · Kayıt ol · Giriş yap · Hesabım · Yönetim paneli
 
 ---
 
@@ -132,6 +132,147 @@ Siteye git → **Kayıt ol** → KURULUM.sql'e yazdığın e-posta ile kaydol. G
 **Önemli:** Sipariş kaydı ödemenin yapıldığı anlamına gelmez — oyuncu butona bastığı an kayıt oluşur. Yani **Teslim et** demeden önce ödemenin gerçekten geldiğini Shopier panelinden veya dekonttan kontrol et. Gerçek anlamda otomatik doğrulama için Shopier'in bildirim URL'si ile bir webhook kurmak gerekir, o ayrı bir aşama.
 
 Yönetim paneline sadece `adminler` tablosundaki e-postalar girebilir. Başka birini yetkilendirmek için Supabase → **Table Editor → adminler → Insert row** ile e-postasını ekle.
+
+---
+
+## Kredi sistemi
+
+Oyuncular siteden kredi satın alır, VIP paketlerini bu krediyle anında alabilir. 1 kredi = 1 ₺.
+
+### Kurulum
+
+KURULUM.sql'i çalıştırdıktan sonra **KREDI.sql** dosyasını da aynı şekilde çalıştır: Supabase → SQL Editor → New query → dosyanın tamamını yapıştır → Run. Birden fazla kez çalıştırman zarar vermez.
+
+### Nasıl işliyor
+
+**Kredi yükleme:** Oyuncu mağazadaki kredi paketlerinden birini seçer → sipariş kaydı oluşur ve Discord'a yönlendirilir → ödemeyi alıp yönetim panelinden **Teslim et** dediğinde kredi otomatik olarak hesabına yüklenir. Elle kredi yazmana gerek yok.
+
+**Kredi ile VIP alma:** Oyuncu paket kartındaki "Kredi ile al" butonuna basar → kredi anında düşer, sipariş "Kredi" ödemeli olarak panelinde görünür. Senin tek yapman gereken oyun içinde rütbeyi verip **Teslim et** demek — para kontrolü gerekmiyor, ödeme zaten yapılmış sayılır.
+
+**İptal:** Kredi ile alınmış bir siparişi iptal edersen kredi otomatik iade edilir.
+
+**Elle kredi verme:** Yönetim paneli → Üyeler sekmesi → ilgili oyuncunun yanındaki **Düzenle**. Eklemek için `100`, çıkarmak için `-50` yazarsın. Etkinlik ödülü, çekiliş, telafi gibi durumlar için.
+
+### Güvenlik
+
+Kredi bakiyesi tarayıcıdan değiştirilemez. Tüm kredi işlemleri veritabanı içindeki fonksiyonlar üzerinden yürür ve fiyatlar `paketler` ile `kredi_paketleri` tablolarından okunur — yani kimse 300₺'lik paketi 1 krediye alamaz.
+
+**Önemli:** `ayarlar.js` içindeki fiyatları değiştirirsen Supabase'deki bu iki tabloyu da güncellemen gerekir (Table Editor'den elle, ya da KREDI.sql'in ilgili `insert` satırlarını düzenleyip tekrar çalıştırarak). Aksi halde sitede görünen fiyat ile kredi düşülen tutar farklı olur.
+
+---
+
+## Shopier otomatik ödeme
+
+Kurduğunda oyuncu kartıyla öder, kredisi **anında** hesabına yüklenir. Sen hiçbir şey yapmazsın.
+
+### a) Shopier API bilgilerini al
+
+1. Shopier paneline gir → sol menü **Entegrasyonlar** → **Modül Yönetimi**
+2. Site kaydı istiyorsa protokolü **https** seçip `shionetwork.com.tr` yaz ve kaydet
+3. Açılan ekranda **API Key** ve **API Secret** bilgilerini kopyala
+
+> API erişimi hesabında kapalıysa Shopier destekten açtırman gerekebilir.
+
+### b) Geri dönüş adresini tanımla
+
+Aynı sayfadaki **Geri Dönüş URL** alanına şunu yaz:
+
+```
+https://shionetwork.com.tr/api/shopier/bildirim
+```
+
+Bu adres ödemeyi doğrulayan yer. Yanlış yazarsan ödemeler alınır ama krediler yüklenmez.
+
+### c) Supabase servis anahtarını al
+
+Ödeme bildirimi geldiğinde krediyi sunucu tarafında yüklememiz gerekiyor, bunun için ayrı bir anahtar lazım.
+
+Supabase → **Settings → API Keys** → **Legacy** sekmesi → `service_role` anahtarını kopyala.
+
+> ⚠️ Bu anahtar tüm güvenlik kurallarını atlar. Sadece Vercel'e gir, başka hiçbir yere yazma, kimseyle paylaşma, `NEXT_PUBLIC_` ön eki **kesinlikle ekleme**.
+
+### d) Vercel'e dört değişken ekle
+
+Vercel → projen → **Settings → Environment Variables**:
+
+| Key | Value |
+|---|---|
+| `SHOPIER_API_KEY` | Shopier API Key |
+| `SHOPIER_API_SECRET` | Shopier API Secret |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role anahtarı |
+| `NEXT_PUBLIC_SHOPIER_AKTIF` | `1` |
+
+Sonra **Deployments → ⋯ → Redeploy**.
+
+### e) Veritabanını güncelle
+
+Supabase → SQL Editor → **SHOPIER.sql** dosyasının tamamını yapıştır → Run.
+
+### Nasıl çalışıyor
+
+**Kredi alımı:** Oyuncu paketi seçer → Shopier ödeme sayfası açılır → ödeme tamamlanır → Shopier bize imzalı bildirim gönderir → imza doğrulanır, tutar kontrol edilir → kredi otomatik yüklenir → oyuncu "Ödemen alındı" sayfasına döner.
+
+**VIP alımı (kartla):** Aynı akış, ama rütbe otomatik verilmez. Sipariş yönetim panelinde **✓ Ödendi** rozetiyle görünür; sen oyun içinde rütbeyi verip **Teslim et** dersin.
+
+**VIP alımı (krediyle):** Kredi anında düşer, sipariş **Kredi** rozetiyle listelenir.
+
+### Güvenlik önlemleri
+
+- Gelen her bildirimin imzası API Secret ile doğrulanır; imzasız veya yanlış imzalı istek hiçbir işlem yapmaz
+- Ödenen tutar sipariş tutarıyla karşılaştırılır
+- Aynı ödeme iki kez işlenemez (veritabanı seviyesinde benzersiz indeks)
+- Ödeme başlatırken siparişin gerçekten o kullanıcıya ait olduğu sunucuda doğrulanır
+- Fiyatlar veritabanından okunur, tarayıcıdan gelen değere güvenilmez
+
+### Kurmazsan ne olur
+
+Hiçbir şey bozulmaz. `NEXT_PUBLIC_SHOPIER_AKTIF` tanımlı değilse butonlar eskisi gibi Discord'a yönlendirir, siparişleri elle onaylarsın.
+
+---
+
+## Ödeme yöntemi seçimi
+
+Oyuncu bir VIP paketinin **Satın al** butonuna bastığında bir pencere açılır ve iki seçenek sunulur:
+
+- **💳 Shopier ile öde** — kredi kartı / banka kartı / havale
+- **🪙 Kredi ile öde** — bakiyesinden düşer, anında tamamlanır
+
+Kredi bakiyesi yetmiyorsa ikinci seçenek pasif görünür ve kaç kredi eksik olduğu yazar.
+
+### Shopier linklerini nereye yazacaksın
+
+`lib/ayarlar.js` dosyasında her paketin `satinAlLinki` alanı var. Shopier panelinde ürünü açıp linkini buraya yapıştır:
+
+```js
+{
+  id: "vip",
+  ad: "VIP",
+  fiyat: 75,
+  satinAlLinki: "https://www.shopier.com/xxxxxxx",   // ← buraya
+  ...
+}
+```
+
+Aynı alan kredi paketlerinde de var:
+
+```js
+export const KREDI_PAKETLERI = [
+  { id: "k50", kredi: 50, bonus: 0, fiyat: 50, satinAlLinki: "https://www.shopier.com/xxxxxxx" },
+  ...
+];
+```
+
+### Hangi yol kullanılır
+
+Sistem şu sırayla bakar:
+
+1. `satinAlLinki` doluysa → o Shopier ürün linkine gider (sipariş kaydı yine oluşur, panelinde görürsün)
+2. Boşsa ve Shopier API kuruluysa → doğrudan ödeme sayfasına gider, kredi otomatik yüklenir
+3. İkisi de yoksa → Discord'a yönlendirir, siparişi elle onaylarsın
+
+> Ürün linki kullanırken ödeme bildirimi gelmez, yani krediyi **sen** yönetim panelinden Teslim et diyerek yüklersin. Tam otomatik olması için Shopier API kurulumunu yapman gerekir (bir üstteki bölüm).
+>
+> Shopier ürün açıklamasına **"Sipariş notuna oyun içi nickinizi yazın"** eklemeyi unutma.
 
 ---
 

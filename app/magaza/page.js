@@ -1,5 +1,6 @@
-import PaketKarti from "../../components/PaketKarti";
-import { PAKETLER, SUNUCU } from "../../lib/ayarlar";
+import PaketListesi from "../../components/PaketListesi";
+import KrediBolumu from "../../components/KrediBolumu";
+import { SUNUCU } from "../../lib/ayarlar";
 
 export const metadata = {
   title: `Mağaza — ${SUNUCU.ad}`,
@@ -39,13 +40,11 @@ export default function MagazaSayfasi() {
 
       <section className="bolum" style={{ borderTop: "none", paddingTop: 40 }}>
         <div className="kapsayici">
-          <div className="paketler">
-            {PAKETLER.map((p) => (
-              <PaketKarti paket={p} key={p.id} />
-            ))}
-          </div>
+          <PaketListesi />
         </div>
       </section>
+
+      <KrediBolumu />
 
       <section className="bolum">
         <div className="kapsayici">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Hero from "../components/Hero";
-import PaketKarti from "../components/PaketKarti";
-import { OZELLIKLER, PAKETLER, SUNUCU } from "../lib/ayarlar";
+import PaketListesi from "../components/PaketListesi";
+import { OZELLIKLER, SUNUCU } from "../lib/ayarlar";
 
 export default function AnaSayfa() {
   return (
@@ -40,11 +40,7 @@ export default function AnaSayfa() {
             </p>
           </div>
 
-          <div className="paketler">
-            {PAKETLER.map((p) => (
-              <PaketKarti paket={p} key={p.id} />
-            ))}
-          </div>
+          <PaketListesi />
 
           <p style={{ marginTop: 28 }}>
             <Link href="/magaza" className="dugme">
