@@ -294,6 +294,17 @@ https://shionetwork.com.tr/sifre-yenile
 
 > ⚠️ Supabase'in ücretsiz e-posta servisi saatte sadece birkaç mail gönderir ve çoğu spam klasörüne düşer. Oyuncu sayın artınca **Authentication → Emails → SMTP Settings** bölümünden ücretsiz bir servis (Resend, Brevo) bağlaman gerekir. Yoksa "şifremi unuttum" pratikte çalışmaz.
 
+
+### Security Advisor uyarıları
+
+Supabase → **Advisors → Security Advisor** ekranında "Public Can Execute SECURITY DEFINER Function" uyarıları görürsen, **GUVENLIK-EK.sql** dosyasını çalıştır. Bu dosya fonksiyon yetkilerini daraltır: tetikleyici fonksiyonlar tamamen kapanır, geri kalanlar sadece giriş yapmış kullanıcılara açılır.
+
+Çalıştırdıktan sonra aynı ekranda **Rerun linter** butonuna bas, uyarılar temizlenmiş olmalı.
+
+Kalabilecek iki uyarı normaldir ve ücretli plan gerektirir:
+- **Leaked Password Protection Disabled** — sızmış şifre veritabanı kontrolü, Supabase Pro özelliği
+- **Insufficient MFA Options** — kullanıcılar için iki adımlı doğrulama seçenekleri
+
 ### Neler korunuyor
 
 **Oturum çalınmasına karşı**
