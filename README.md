@@ -2,7 +2,7 @@
 
 Next.js ile yazılmış, Vercel'de ücretsiz yayınlanabilen Minecraft sunucu sitesi.
 
-**Sayfalar:** Ana sayfa · Mağaza (VIP + kredi) · Kayıt ol · Giriş yap · Hesabım · Yönetim paneli
+**Sayfalar:** Ana sayfa · Mağaza (VIP + kredi) · Kayıt ol · Giriş yap · Şifremi unuttum · Hesabım · Yönetim paneli
 
 ---
 
@@ -273,6 +273,62 @@ Sistem şu sırayla bakar:
 > Ürün linki kullanırken ödeme bildirimi gelmez, yani krediyi **sen** yönetim panelinden Teslim et diyerek yüklersin. Tam otomatik olması için Shopier API kurulumunu yapman gerekir (bir üstteki bölüm).
 >
 > Shopier ürün açıklamasına **"Sipariş notuna oyun içi nickinizi yazın"** eklemeyi unutma.
+
+---
+
+## Güvenlik sistemi
+
+### Kurulum
+
+Supabase → SQL Editor → **GUVENLIK.sql** dosyasının tamamını yapıştır → Run.
+
+Dosyanın başında bir kontrol sorgusu var: aynı nicki kullanan iki hesap varsa listeler. Sonuç boş dönerse sorun yok. Doluysa Table Editor'den nickleri düzeltip dosyayı tekrar çalıştır.
+
+### Şifre yenileme e-postaları için
+
+Supabase → **Authentication → URL Configuration** → **Redirect URLs** listesine ekle:
+
+```
+https://shionetwork.com.tr/sifre-yenile
+```
+
+> ⚠️ Supabase'in ücretsiz e-posta servisi saatte sadece birkaç mail gönderir ve çoğu spam klasörüne düşer. Oyuncu sayın artınca **Authentication → Emails → SMTP Settings** bölümünden ücretsiz bir servis (Resend, Brevo) bağlaman gerekir. Yoksa "şifremi unuttum" pratikte çalışmaz.
+
+### Neler korunuyor
+
+**Oturum çalınmasına karşı**
+Giriş bilgileri artık tarayıcının localStorage'ında değil, **httpOnly çerezlerde** tutuluyor. Bu çerezleri JavaScript okuyamaz — sitede bir XSS açığı çıksa bile oturum çalınamaz. Tarayıcı Supabase'e doğrudan bağlanmıyor; her istek `/api/db` vekilinden geçiyor.
+
+**Kaba kuvvet saldırısına karşı**
+Giriş denemeleri hem IP hem hesap bazında sınırlı: bir hesaba 10 dakikada en fazla 6 deneme, bir IP'den 15 deneme. Kayıt saatte 5, şifre sıfırlama yarım saatte 4 istekle sınırlı.
+
+**Zayıf şifreye karşı**
+En az 8 karakter, bir harf ve bir rakam zorunlu. Yaygın şifreler (`12345678`, `password` vb.) reddediliyor. Şifre nicki veya e-posta adını içeremiyor. Formda canlı güç göstergesi var.
+
+**Hesap çalmaya karşı**
+Şifre değiştirmek için mevcut şifre zorunlu — açık kalmış bir oturumdan şifre değiştirilemez. "Her yerden çık" ile tüm cihazlardaki oturumlar kapatılabilir.
+
+**Kimlik taklidine karşı**
+Aynı Minecraft nicki iki hesapta kayıtlı olamaz (veritabanı seviyesinde benzersizlik).
+
+**Fiyat oynamasına karşı**
+Siparişler doğrudan eklenemiyor, sadece veritabanı fonksiyonları üzerinden oluşuyor ve fiyat `paketler` tablosundan okunuyor. Kimse 300₺'lik paketi 1₺'ye sipariş edemez.
+
+**Spam siparişe karşı**
+Bir oyuncunun aynı anda en fazla 5 bekleyen siparişi olabilir.
+
+**Kötüye kullanıma karşı**
+Yönetici kredi düzenlemeleri `kredi_hareketleri` tablosuna kaydediliyor: kim, kime, ne kadar, ne zaman. Tek seferde 100.000'den fazla kredi verilemiyor.
+
+**Bilgi sızmasına karşı**
+"Şifremi unuttum" ekranı, e-posta kayıtlı olsun olmasın aynı mesajı gösterir — böylece hangi e-postaların sistemde olduğu öğrenilemez.
+
+### Senin yapman gerekenler
+
+1. **Vercel hesabında 2FA'yı aç.** Domainin, siten ve ödeme anahtarların o hesaba bağlı.
+2. **Supabase hesabında 2FA'yı aç.**
+3. `service_role` anahtarını hiçbir yere yazma, kimseyle paylaşma.
+4. Yönetici yetkisini sadece güvendiğin kişilere ver — yönetim paneline giren herkes sınırsız kredi dağıtabilir.
 
 ---
 
