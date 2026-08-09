@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { uyelikAktif } from "../../lib/ayarlar";
-import { oturumOku } from "../../lib/kimlik";
-import { adminMi, tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla } from "../../lib/veritabani";
+import { benKim } from "../../lib/kimlik";
+import { tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla } from "../../lib/veritabani";
 
 const DURUM_ETIKET = {
   bekliyor: { metin: "Bekliyor", renk: "#f0a63c" },
@@ -51,13 +51,12 @@ export default function YonetimSayfasi() {
   useEffect(() => {
     if (!uyelikAktif) return;
     (async () => {
-      const oturum = oturumOku();
-      if (!oturum) {
+      const oturum = await benKim();
+      if (!oturum.girisli) {
         router.replace("/giris");
         return;
       }
-      const admin = await adminMi();
-      if (!admin) {
+      if (!oturum.admin) {
         setYetki("yok");
         return;
       }

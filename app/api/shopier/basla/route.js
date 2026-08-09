@@ -4,8 +4,8 @@ import {
   shopierAktif,
   imzaOlustur,
   yonetimIstek,
-  kullaniciDogrula,
 } from "../../../../lib/shopier";
+import { kullaniciAl } from "../../../../lib/oturum-sunucu";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +16,7 @@ export async function POST(request) {
       return Response.json({ hata: "Shopier henüz yapılandırılmamış." }, { status: 503 });
     }
 
-    const token = (request.headers.get("authorization") || "").replace("Bearer ", "");
-    const kullanici = await kullaniciDogrula(token);
+    const kullanici = await kullaniciAl();
     if (!kullanici?.id) {
       return Response.json({ hata: "Önce giriş yapmalısın." }, { status: 401 });
     }

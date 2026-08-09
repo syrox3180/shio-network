@@ -1468,3 +1468,79 @@ button.dugme:disabled:hover {
 .pencere-not strong {
   color: var(--amber);
 }
+
+/* ================= GÜVENLİK / ŞİFRE ALANLARI ================= */
+.sifre-sar {
+  position: relative;
+}
+
+.sifre-sar input {
+  padding-right: 46px;
+}
+
+.sifre-goz {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.16s ease;
+}
+
+.sifre-goz:hover {
+  opacity: 1;
+}
+
+.guc {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 9px;
+}
+
+.guc-cubuklar {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.guc-parca {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  transition: background 0.25s ease;
+}
+
+.guc-etiket {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.guvenlik-kutu {
+  background: var(--rock);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 26px 28px;
+}
+
+.guvenlik-bas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.guvenlik-bas h3 {
+  margin: 0;
+}

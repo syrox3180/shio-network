@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { uyelikAktif, SUNUCU } from "../../lib/ayarlar";
 import { kayitOl } from "../../lib/kimlik";
+import { sifreKontrol, nickKontrol } from "../../lib/sifre";
+import SifreAlani from "../../components/SifreAlani";
 
 export default function KayitSayfasi() {
   const router = useRouter();
   const [nick, setNick] = useState("");
   const [eposta, setEposta] = useState("");
   const [sifre, setSifre] = useState("");
+  const [sifreTekrar, setSifreTekrar] = useState("");
   const [hata, setHata] = useState("");
   const [basari, setBasari] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
@@ -21,8 +24,7 @@ export default function KayitSayfasi() {
         <div className="form-kutu">
           <h1>Üyelik kapalı</h1>
           <p className="alt-metin">
-            Üyelik sistemi henüz açılmadı. Sunucuya bağlanmak veya paket almak için üyelik gerekmiyor — Discord'dan bize
-            ulaşabilirsin.
+            Üyelik sistemi henüz açılmadı. Sunucuya bağlanmak için üyelik gerekmiyor.
           </p>
           <a href={SUNUCU.discord} target="_blank" rel="noreferrer" className="dugme dugme-mor dugme-genis">
             Discord'a katıl
@@ -38,22 +40,23 @@ export default function KayitSayfasi() {
     setBasari("");
 
     const temizNick = nick.trim();
-    if (!/^[A-Za-z0-9_]{3,16}$/.test(temizNick)) {
-      setHata("Nick 3-16 karakter olmalı ve sadece harf, rakam ve alt çizgi içerebilir.");
-      return;
-    }
-    if (sifre.length < 6) {
-      setHata("Şifre en az 6 karakter olmalı.");
-      return;
-    }
+
+    const nickHatasi = nickKontrol(temizNick);
+    if (nickHatasi) return setHata(nickHatasi);
+
+    const sifreHatasi = sifreKontrol(sifre, { nick: temizNick, eposta });
+    if (sifreHatasi) return setHata(sifreHatasi);
+
+    if (sifre !== sifreTekrar) return setHata("Şifreler birbirini tutmuyor.");
 
     setBekliyor(true);
     try {
-      const veri = await kayitOl({ eposta: eposta.trim(), sifre, nick: temizNick });
-      if (veri.access_token) {
+      const sonuc = await kayitOl({ eposta: eposta.trim(), sifre, nick: temizNick });
+      if (sonuc.girisYapildi) {
         router.push("/panel");
+        router.refresh();
       } else {
-        setBasari("Hesabın oluşturuldu. E-postana gelen doğrulama bağlantısına tıkla, sonra giriş yapabilirsin.");
+        setBasari(sonuc.mesaj || "Hesabın oluşturuldu.");
       }
     } catch (err) {
       setHata(err.message);
@@ -79,9 +82,10 @@ export default function KayitSayfasi() {
             onChange={(e) => setNick(e.target.value)}
             placeholder="Minecraft nickin"
             autoComplete="username"
+            maxLength={16}
             required
           />
-          <p className="ipucu">Paketler bu nicke tanımlanır, doğru yazdığından emin ol.</p>
+          <p className="ipucu">Paketler bu nicke tanımlanır. Her nick sadece bir hesapta olabilir.</p>
         </div>
 
         <div className="alan">
@@ -95,20 +99,26 @@ export default function KayitSayfasi() {
             autoComplete="email"
             required
           />
+          <p className="ipucu">Şifreni unutursan buraya yenileme bağlantısı göndeririz.</p>
         </div>
 
-        <div className="alan">
-          <label htmlFor="sifre">Şifre</label>
-          <input
-            id="sifre"
-            type="password"
-            value={sifre}
-            onChange={(e) => setSifre(e.target.value)}
-            placeholder="En az 6 karakter"
-            autoComplete="new-password"
-            required
-          />
-        </div>
+        <SifreAlani
+          id="sifre"
+          label="Şifre"
+          value={sifre}
+          onChange={(e) => setSifre(e.target.value)}
+          placeholder="En az 8 karakter"
+          gucGoster
+          ipucu="En az 8 karakter, bir harf ve bir rakam içermeli."
+        />
+
+        <SifreAlani
+          id="sifreTekrar"
+          label="Şifre tekrar"
+          value={sifreTekrar}
+          onChange={(e) => setSifreTekrar(e.target.value)}
+          placeholder="Şifreni tekrar yaz"
+        />
 
         <button type="submit" className="dugme dugme-mor dugme-genis" disabled={bekliyor}>
           {bekliyor ? "Oluşturuluyor" : "Hesabı oluştur"}

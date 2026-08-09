@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { uyelikAktif, SUNUCU } from "../../lib/ayarlar";
-import { girisYap } from "../../lib/kimlik";
-import SifreAlani from "../../components/SifreAlani";
+import { uyelikAktif } from "../../lib/ayarlar";
+import { sifreSifirlamaIste } from "../../lib/kimlik";
 
-export default function GirisSayfasi() {
-  const router = useRouter();
+export default function SifremiUnuttumSayfasi() {
   const [eposta, setEposta] = useState("");
-  const [sifre, setSifre] = useState("");
+  const [mesaj, setMesaj] = useState("");
   const [hata, setHata] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
 
@@ -20,9 +17,6 @@ export default function GirisSayfasi() {
         <div className="form-kutu">
           <h1>Üyelik kapalı</h1>
           <p className="alt-metin">Üyelik sistemi henüz açılmadı.</p>
-          <a href={SUNUCU.discord} target="_blank" rel="noreferrer" className="dugme dugme-mor dugme-genis">
-            Discord'a katıl
-          </a>
         </div>
       </div>
     );
@@ -31,11 +25,11 @@ export default function GirisSayfasi() {
   const gonder = async (e) => {
     e.preventDefault();
     setHata("");
+    setMesaj("");
     setBekliyor(true);
     try {
-      await girisYap({ eposta: eposta.trim(), sifre });
-      router.push("/panel");
-      router.refresh();
+      const sonuc = await sifreSifirlamaIste(eposta.trim());
+      setMesaj(sonuc.mesaj || "Bağlantı gönderildi.");
     } catch (err) {
       setHata(err.message);
     } finally {
@@ -46,10 +40,13 @@ export default function GirisSayfasi() {
   return (
     <div className="form-sayfa">
       <form className="form-kutu" onSubmit={gonder}>
-        <h1>Giriş yap</h1>
-        <p className="alt-metin">Hesabına giriş yap, paketlerini ve kredini görüntüle.</p>
+        <h1>Şifremi unuttum</h1>
+        <p className="alt-metin">
+          Hesabının e-posta adresini yaz, sana şifre yenileme bağlantısı gönderelim.
+        </p>
 
         {hata && <div className="uyari uyari-hata">{hata}</div>}
+        {mesaj && <div className="uyari uyari-basari">{mesaj}</div>}
 
         <div className="alan">
           <label htmlFor="eposta">E-posta</label>
@@ -64,24 +61,12 @@ export default function GirisSayfasi() {
           />
         </div>
 
-        <SifreAlani
-          id="sifre"
-          label="Şifre"
-          value={sifre}
-          onChange={(e) => setSifre(e.target.value)}
-          placeholder="Şifren"
-          autoComplete="current-password"
-        />
-
         <button type="submit" className="dugme dugme-mor dugme-genis" disabled={bekliyor}>
-          {bekliyor ? "Giriş yapılıyor" : "Giriş yap"}
+          {bekliyor ? "Gönderiliyor" : "Bağlantı gönder"}
         </button>
 
         <p className="form-alt">
-          <Link href="/sifremi-unuttum">Şifremi unuttum</Link>
-        </p>
-        <p className="form-alt" style={{ marginTop: 8 }}>
-          Hesabın yok mu? <Link href="/kayit">Kayıt ol</Link>
+          <Link href="/giris">Giriş sayfasına dön</Link>
         </p>
       </form>
     </div>

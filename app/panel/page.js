@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { uyelikAktif, SUNUCU } from "../../lib/ayarlar";
-import { oturumOku, cikisYap } from "../../lib/kimlik";
-import { siparislerimiGetir, adminMi, profilimiGetir } from "../../lib/veritabani";
+import { benKim, cikisYap, sifreDegistir } from "../../lib/kimlik";
+import { siparislerimiGetir } from "../../lib/veritabani";
+import { sifreKontrol } from "../../lib/sifre";
+import SifreAlani from "../../components/SifreAlani";
 
 const DURUM_ETIKET = {
   bekliyor: { metin: "Onay bekliyor", renk: "#f0a63c" },
@@ -18,29 +20,108 @@ function tarihYaz(ham) {
   return new Date(ham).toLocaleDateString("tr-TR");
 }
 
+/* Şifre değiştirme bölümü */
+function SifreBolumu() {
+  const [acik, setAcik] = useState(false);
+  const [eski, setEski] = useState("");
+  const [yeni, setYeni] = useState("");
+  const [tekrar, setTekrar] = useState("");
+  const [hata, setHata] = useState("");
+  const [basari, setBasari] = useState("");
+  const [bekliyor, setBekliyor] = useState(false);
+
+  const gonder = async (e) => {
+    e.preventDefault();
+    setHata("");
+    setBasari("");
+
+    const sifreHatasi = sifreKontrol(yeni);
+    if (sifreHatasi) return setHata(sifreHatasi);
+    if (yeni !== tekrar) return setHata("Yeni şifreler birbirini tutmuyor.");
+
+    setBekliyor(true);
+    try {
+      await sifreDegistir({ eskiSifre: eski, yeniSifre: yeni });
+      setBasari("Şifren güncellendi.");
+      setEski("");
+      setYeni("");
+      setTekrar("");
+    } catch (err) {
+      setHata(err.message);
+    } finally {
+      setBekliyor(false);
+    }
+  };
+
+  return (
+    <div className="guvenlik-kutu">
+      <div className="guvenlik-bas">
+        <div>
+          <h3 className="baslik-m">Şifre</h3>
+          <p className="sonuk kucuk" style={{ margin: "4px 0 0" }}>
+            Şifreni düzenli olarak değiştirmen hesabını güvende tutar.
+          </p>
+        </div>
+        <button className="dugme" onClick={() => setAcik((v) => !v)}>
+          {acik ? "Kapat" : "Şifre değiştir"}
+        </button>
+      </div>
+
+      {acik && (
+        <form onSubmit={gonder} style={{ marginTop: 24, maxWidth: 420 }}>
+          {hata && <div className="uyari uyari-hata">{hata}</div>}
+          {basari && <div className="uyari uyari-basari">{basari}</div>}
+
+          <SifreAlani
+            id="eskiSifre"
+            label="Mevcut şifren"
+            value={eski}
+            onChange={(e) => setEski(e.target.value)}
+            placeholder="Şu anki şifren"
+            autoComplete="current-password"
+          />
+          <SifreAlani
+            id="yeniSifre"
+            label="Yeni şifre"
+            value={yeni}
+            onChange={(e) => setYeni(e.target.value)}
+            placeholder="En az 8 karakter"
+            gucGoster
+          />
+          <SifreAlani
+            id="yeniTekrar"
+            label="Yeni şifre tekrar"
+            value={tekrar}
+            onChange={(e) => setTekrar(e.target.value)}
+            placeholder="Tekrar yaz"
+          />
+
+          <button type="submit" className="dugme dugme-mor dugme-genis" disabled={bekliyor}>
+            {bekliyor ? "Kaydediliyor" : "Şifreyi güncelle"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export default function PanelSayfasi() {
   const router = useRouter();
   const [oturum, setOturum] = useState(undefined);
   const [siparisler, setSiparisler] = useState([]);
-  const [admin, setAdmin] = useState(false);
-  const [kredi, setKredi] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
     if (!uyelikAktif) return;
-    const o = oturumOku();
-    if (!o) {
-      router.replace("/giris");
-      return;
-    }
-    setOturum(o);
-
     (async () => {
+      const o = await benKim();
+      if (!o.girisli) {
+        router.replace("/giris");
+        return;
+      }
+      setOturum(o);
       try {
-        const [s, a, pr] = await Promise.all([siparislerimiGetir(), adminMi(), profilimiGetir()]);
-        setSiparisler(s || []);
-        setAdmin(a);
-        setKredi(pr?.kredi ?? 0);
+        setSiparisler((await siparislerimiGetir()) || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -71,14 +152,14 @@ export default function PanelSayfasi() {
     );
   }
 
-  const nick = oturum.kullanici?.user_metadata?.nick || "—";
-  const eposta = oturum.kullanici?.email || "—";
-  const kayitTarihi = tarihYaz(oturum.kullanici?.created_at);
-  const aktifPaketler = siparisler.filter((s) => s.durum === "teslim");
+  const nick = oturum.kullanici?.nick || "—";
+  const eposta = oturum.kullanici?.eposta || "—";
+  const aktifPaketler = siparisler.filter((s) => s.durum === "teslim" && s.tur === "paket");
 
-  const cikis = () => {
-    cikisYap();
+  const cikis = async (tumCihazlar) => {
+    await cikisYap(tumCihazlar);
     router.push("/");
+    router.refresh();
   };
 
   return (
@@ -95,12 +176,12 @@ export default function PanelSayfasi() {
             <span className="panel-nick">{nick}</span>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {admin && (
+            {oturum.admin && (
               <Link href="/yonetim" className="dugme dugme-vurgu">
                 Yönetim paneli
               </Link>
             )}
-            <button className="dugme" onClick={cikis}>
+            <button className="dugme" onClick={() => cikis(false)}>
               Çıkış yap
             </button>
           </div>
@@ -110,16 +191,12 @@ export default function PanelSayfasi() {
           <div className="panel-kutu panel-kredi">
             <span className="etiket">Kredi bakiyen</span>
             <span className="deger" style={{ fontSize: "1.7rem", color: "var(--amber)" }}>
-              {kredi === null ? "…" : kredi} 🪙
+              {oturum.kredi ?? 0} 🪙
             </span>
           </div>
           <div className="panel-kutu">
             <span className="etiket">E-posta</span>
             <span className="deger">{eposta}</span>
-          </div>
-          <div className="panel-kutu">
-            <span className="etiket">Kayıt tarihi</span>
-            <span className="deger">{kayitTarihi}</span>
           </div>
           <div className="panel-kutu">
             <span className="etiket">Aktif paketin</span>
@@ -154,7 +231,7 @@ export default function PanelSayfasi() {
             <table className="tablo">
               <thead>
                 <tr>
-                  <th>Paket</th>
+                  <th>Ürün</th>
                   <th>Tutar</th>
                   <th>Tarih</th>
                   <th>Durum</th>
@@ -166,7 +243,9 @@ export default function PanelSayfasi() {
                     <td>
                       <strong>{s.paket_ad}</strong>
                     </td>
-                    <td className="mono">{s.fiyat}₺</td>
+                    <td className="mono">
+                      {s.odeme === "kredi" ? `${s.fiyat} 🪙` : `${s.fiyat}₺`}
+                    </td>
                     <td className="sonuk kucuk">{tarihYaz(s.olusturma)}</td>
                     <td>
                       <span className="rozet" style={{ color: DURUM_ETIKET[s.durum]?.renk }}>
@@ -186,9 +265,25 @@ export default function PanelSayfasi() {
           </div>
         )}
 
-        <p className="sonuk kucuk" style={{ marginTop: 22 }}>
-          Ödemeni yaptıysan ve siparişin hâlâ onay bekliyorsa Discord'dan destek talebi aç.
-        </p>
+        <h2 className="baslik-m" style={{ margin: "48px 0 20px" }}>
+          Hesap güvenliği
+        </h2>
+
+        <SifreBolumu />
+
+        <div className="guvenlik-kutu" style={{ marginTop: 16 }}>
+          <div className="guvenlik-bas">
+            <div>
+              <h3 className="baslik-m">Tüm cihazlardan çık</h3>
+              <p className="sonuk kucuk" style={{ margin: "4px 0 0" }}>
+                Ortak bir bilgisayarda oturum açık kaldıysa hepsini birden kapat.
+              </p>
+            </div>
+            <button className="dugme" onClick={() => cikis(true)}>
+              Her yerden çık
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
