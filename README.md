@@ -411,6 +411,78 @@ Dürüst olmak gerekirse birkaç şey hâlâ dışarıda:
 
 ---
 
+## Sandık sistemi ve etkinlikler
+
+### Kurulum
+
+**1.** Supabase → SQL Editor → **SANDIK.sql** çalıştır.
+
+**2.** Minecraft sunucunda `server.properties` dosyasını aç:
+
+```
+enable-rcon=true
+rcon.port=25575
+rcon.password=buraya-uzun-ve-rastgele-bir-sifre
+```
+
+Sunucuyu yeniden başlat.
+
+**3.** Vercel → Settings → Environment Variables:
+
+| Key | Value |
+|---|---|
+| `RCON_HOST` | Sunucunun IP'si (`87.76.131.206`) |
+| `RCON_PORT` | `25575` |
+| `RCON_SIFRE` | server.properties'e yazdığın şifre |
+
+Redeploy et.
+
+> ⚠️ RCON portunu güvenlik duvarında sadece gerekli yerlere aç, herkese açma. RCON şifresi çalınırsa sunucunda istediği komutu çalıştırabilirler. Uzun ve rastgele bir şifre kullan.
+
+### Nasıl işliyor
+
+1. Oyuncu paketi satın alır
+2. Sen yönetim panelinden **Teslim et** dersin
+3. Paket otomatik olarak oyuncunun **Sandık** sayfasına düşer
+4. Oyuncu hazır olduğunda **Etkinleştir** der, nickini yazar
+5. Site sunucuya komutu gönderir, rütbe **30 gün** süreyle tanımlanır
+6. Sandıkta kalan gün sayısı görünür
+
+Süre etkinleştirme anında başlar — oyuncu paketi alıp beklerse süresi boşa gitmez.
+
+### Komutu değiştirmek
+
+`lib/ayarlar.js` içinde:
+
+```js
+export const TESLIMAT = {
+  komut: "lp user {nick} parent addtemp {grup} {sure}d",
+  ekKomutlar: [],
+};
+```
+
+LuckPerms için hazır geliyor. Farklı bir yetki eklentisi kullanıyorsan komutu değiştir. Süresiz vermek istersen `addtemp` yerine `add` yaz ve `{sure}d` kısmını sil.
+
+Her paketin grubu ve süresi ayrı ayarlanır:
+
+```js
+{ id: "sponsor", oyunGrubu: "sponsor", sureGun: 30, ... }
+```
+
+### Sunucu kapalıysa
+
+Etkinleştirme başarısız olur, eşya sandıkta kalır ve "Hata" olarak işaretlenir. Discord'una bildirim gider. Oyuncu sunucu açıldığında **Tekrar dene** ile kendisi halledebilir.
+
+### 2x kredi etkinliği
+
+Yönetim paneli → **Etkinlik** sekmesi. Çarpanı gir (2 yazarsan 50 kredi alan 100 alır), istersen bitiş tarihi belirle, **Etkinliği başlat** de.
+
+Mağazada otomatik olarak bir duyuru bandı çıkar ve kart üzerindeki kredi miktarı güncellenir. Çarpan sunucu tarafında uygulanır — kimse tarayıcıdan oynayarak fazla kredi alamaz.
+
+Bitiş tarihi girersen o tarihte kendiliğinden kapanır, elle kapatman gerekmez.
+
+---
+
 ## 5. Bilgisayarında çalıştırma (isteğe bağlı)
 
 ```bash

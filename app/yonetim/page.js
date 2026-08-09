@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { uyelikAktif } from "../../lib/ayarlar";
 import { benKim } from "../../lib/kimlik";
 import IkiFaktor from "../../components/IkiFaktor";
+import EtkinlikYonetimi from "../../components/EtkinlikYonetimi";
 import { tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla } from "../../lib/veritabani";
 
 const DURUM_ETIKET = {
@@ -227,6 +228,12 @@ export default function YonetimSayfasi() {
             Üyeler ({uyeler.length})
           </button>
           <button
+            className={sekme === "etkinlik" ? "sekme aktif" : "sekme"}
+            onClick={() => setSekme("etkinlik")}
+          >
+            Etkinlik
+          </button>
+          <button
             className={sekme === "guvenlik" ? "sekme aktif" : "sekme"}
             onClick={() => setSekme("guvenlik")}
           >
@@ -359,6 +366,8 @@ export default function YonetimSayfasi() {
             )}
           </>
         )}
+
+        {!yukleniyor && sekme === "etkinlik" && <EtkinlikYonetimi />}
 
         {!yukleniyor && sekme === "guvenlik" && (
           <>

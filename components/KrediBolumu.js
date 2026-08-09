@@ -4,15 +4,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { KREDI_PAKETLERI, uyelikAktif, shopierAktif, SUNUCU } from "../lib/ayarlar";
 import { benKim } from "../lib/kimlik";
-import { krediSiparisiOlustur, shopierOdemeyeGit } from "../lib/veritabani";
+import { krediSiparisiOlustur, shopierOdemeyeGit, carpaniGetir } from "../lib/veritabani";
 
-function KrediKarti({ paket, girisli, onDegisim }) {
+function KrediKarti({ paket, girisli, carpan = 1, onDegisim }) {
   const router = useRouter();
   const [durum, setDurum] = useState("hazir");
   const [mesaj, setMesaj] = useState("");
   const [hataMi, setHataMi] = useState(false);
 
-  const toplam = paket.kredi + (paket.bonus || 0);
+  const temel = paket.kredi + (paket.bonus || 0);
+  const toplam = Math.floor(temel * carpan);
 
   const siparisVer = async () => {
     if (!girisli) {
@@ -64,7 +65,11 @@ function KrediKarti({ paket, girisli, onDegisim }) {
         <span>🪙</span>
       </div>
 
-      {paket.bonus > 0 ? (
+      {carpan > 1 ? (
+        <p className="kredi-bonus">
+          <s className="sonuk">{temel}</s> → <strong>{carpan}x etkinlik</strong>
+        </p>
+      ) : paket.bonus > 0 ? (
         <p className="kredi-bonus">
           {paket.kredi} + <strong>{paket.bonus} bonus</strong>
         </p>
@@ -94,6 +99,7 @@ function KrediKarti({ paket, girisli, onDegisim }) {
 export default function KrediBolumu() {
   const [bakiye, setBakiye] = useState(null);
   const [girisli, setGirisli] = useState(false);
+  const [etkinlik, setEtkinlik] = useState(null);
 
   const bakiyeCek = useCallback(async () => {
     if (!uyelikAktif) return;
@@ -104,6 +110,7 @@ export default function KrediBolumu() {
 
   useEffect(() => {
     bakiyeCek();
+    carpaniGetir().then(setEtkinlik);
   }, [bakiyeCek]);
 
   if (!uyelikAktif) return null;
@@ -127,9 +134,19 @@ export default function KrediBolumu() {
           </div>
         )}
 
+        {etkinlik?.aktif && (
+          <div className="etkinlik-bandi">
+            <span className="etkinlik-etiket">{etkinlik.baslik}</span>
+            <span className="etkinlik-metin">
+              Tüm kredi paketlerinde <strong>{etkinlik.carpan}x</strong> kredi!
+              {etkinlik.bitis && ` ${new Date(etkinlik.bitis).toLocaleDateString("tr-TR")} tarihine kadar.`}
+            </span>
+          </div>
+        )}
+
         <div className="kredi-liste">
           {KREDI_PAKETLERI.map((p) => (
-            <KrediKarti key={p.id} paket={p} girisli={girisli} onDegisim={bakiyeCek} />
+            <KrediKarti key={p.id} paket={p} girisli={girisli} carpan={etkinlik?.aktif ? etkinlik.carpan : 1} onDegisim={bakiyeCek} />
           ))}
         </div>
 

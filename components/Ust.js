@@ -46,6 +46,9 @@ export default function Ust() {
           {uyelikAktif &&
             (oturum.girisli ? (
               <>
+                <Link href="/sandik" onClick={kapat}>
+                  Sandık
+                </Link>
                 <Link href="/panel" onClick={kapat}>
                   Hesabım
                 </Link>

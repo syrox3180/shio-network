@@ -24,6 +24,8 @@ const IZINLI_TABLOLAR = new Set([
   "paketler",
   "kredi_paketleri",
   "kredi_hareketleri",
+  "envanter",
+  "site_ayarlari",
 ]);
 
 const IZINLI_FONKSIYONLAR = new Set([
@@ -32,6 +34,7 @@ const IZINLI_FONKSIYONLAR = new Set([
   "paket_siparisi_olustur",
   "kredi_ayarla",
   "nick_musait",
+  "carpan_ayarla",
 ]);
 
 const IZINLI_METOTLAR = new Set(["GET", "POST", "PATCH"]);
