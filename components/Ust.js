@@ -4,24 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SUNUCU, uyelikAktif } from "../lib/ayarlar";
-import { oturumOku } from "../lib/kimlik";
-import { adminMi } from "../lib/veritabani";
+import { benKim } from "../lib/kimlik";
 
 export default function Ust() {
   const [acik, setAcik] = useState(false);
-  const [girisli, setGirisli] = useState(false);
-  const [admin, setAdmin] = useState(false);
+  const [oturum, setOturum] = useState({ girisli: false });
   const yol = usePathname();
 
   useEffect(() => {
     if (!uyelikAktif) return;
-    const oturum = oturumOku();
-    setGirisli(Boolean(oturum));
-    if (oturum) {
-      adminMi().then(setAdmin).catch(() => setAdmin(false));
-    } else {
-      setAdmin(false);
-    }
+    benKim().then(setOturum);
   }, [yol]);
 
   const kapat = () => setAcik(false);
@@ -52,12 +44,12 @@ export default function Ust() {
           </Link>
 
           {uyelikAktif &&
-            (girisli ? (
+            (oturum.girisli ? (
               <>
                 <Link href="/panel" onClick={kapat}>
                   Hesabım
                 </Link>
-                {admin && (
+                {oturum.admin && (
                   <Link href="/yonetim" onClick={kapat}>
                     Yönetim
                   </Link>

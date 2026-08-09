@@ -57,7 +57,7 @@ export default function PaketKarti({ paket, bakiye, girisli, onDegisim }) {
     } catch (err) {
       setDurum("hazir");
       setHataMi(true);
-      setMesaj("Sipariş oluşturulamadı, tekrar dene.");
+      setMesaj(err.message || "Sipariş oluşturulamadı, tekrar dene.");
       console.error(err);
     }
   };

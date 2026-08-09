@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { KREDI_PAKETLERI, uyelikAktif, shopierAktif, SUNUCU } from "../lib/ayarlar";
-import { oturumOku } from "../lib/kimlik";
-import { profilimiGetir, krediSiparisiOlustur, shopierOdemeyeGit } from "../lib/veritabani";
+import { benKim } from "../lib/kimlik";
+import { krediSiparisiOlustur, shopierOdemeyeGit } from "../lib/veritabani";
 
 function KrediKarti({ paket, girisli, onDegisim }) {
   const router = useRouter();
@@ -97,15 +97,9 @@ export default function KrediBolumu() {
 
   const bakiyeCek = useCallback(async () => {
     if (!uyelikAktif) return;
-    const oturum = oturumOku();
-    setGirisli(Boolean(oturum));
-    if (!oturum) return;
-    try {
-      const profil = await profilimiGetir();
-      setBakiye(profil?.kredi ?? 0);
-    } catch {
-      setBakiye(0);
-    }
+    const oturum = await benKim();
+    setGirisli(oturum.girisli);
+    if (oturum.girisli) setBakiye(oturum.kredi ?? 0);
   }, []);
 
   useEffect(() => {
