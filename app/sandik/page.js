@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { uyelikAktif, SUNUCU, PAKETLER } from "../../lib/ayarlar";
+import { uyelikAktif, SUNUCU, urunBul, urunKategorisi, KATEGORI_ADI } from "../../lib/ayarlar";
 import { benKim } from "../../lib/kimlik";
 import { sandigimiGetir, esyaEtkinlestir } from "../../lib/veritabani";
 import { NICK_KURALI } from "../../lib/sifre";
@@ -17,6 +17,18 @@ function tarihYaz(ham) {
   });
 }
 
+function aciklamaYaz(kategori, sure, elleMi) {
+  if (kategori === "kasa")
+    return "Etkinleştirdiğinde kasa anahtarı oyun içi hesabına gönderilir. Süresi yok, istediğin zaman açarsın.";
+  if (kategori === "kit")
+    return "Etkinleştirdiğinde set doğrudan envanterine düşer. Etkinleştirmeden önce oyunda olmalısın.";
+  if (kategori === "af" && elleMi)
+    return "Bu ürün yetkili tarafından elle işleniyor. Etkinleştirdiğinde talebin ekibe iletilir, sonra Discord'dan destek talebi açarsın.";
+  if (kategori === "af")
+    return "Etkinleştirdiğin an cezan sunucudan otomatik kaldırılır. Nickini doğru yazdığından emin ol.";
+  return `${sure} gün süreyle geçerli. Süre, etkinleştirdiğin andan itibaren başlar.`;
+}
+
 function kalanGun(bitis) {
   if (!bitis) return 0;
   return Math.max(0, Math.ceil((new Date(bitis) - Date.now()) / 86400000));
@@ -28,9 +40,11 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
   const [hata, setHata] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
 
-  const paket = PAKETLER.find((p) => p.id === esya.paket_id);
-  const renk = paket?.renk || "#9d5cff";
-  const sure = paket?.sureGun || 30;
+  const urun = urunBul(esya.paket_id);
+  const kategori = urunKategorisi(urun);
+  const renk = urun?.renk || "#9d5cff";
+  const sureli = kategori === "rutbe";
+  const sure = urun?.sureGun || 30;
 
   const etkinlestir = async (e) => {
     e.preventDefault();
@@ -43,8 +57,11 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
 
     setBekliyor(true);
     try {
-      await esyaEtkinlestir(esya.id, nick.trim());
+      const sonuc = await esyaEtkinlestir(esya.id, nick.trim());
       await onGuncelle();
+      if (sonuc?.elle && sonuc?.mesaj) {
+        alert(sonuc.mesaj);
+      }
     } catch (err) {
       setHata(err.message);
     } finally {
@@ -59,11 +76,58 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
       <div className="esya esya-etkin">
         <span className="esya-serit" style={{ background: renk }} />
         <div className="esya-ust">
-          <h3 className="esya-ad" style={{ color: renk }}>
-            {esya.paket_ad}
-          </h3>
+          <div>
+            <span className="kategori-rozet">{KATEGORI_ADI[kategori] || "Ürün"}</span>
+            <h3 className="esya-ad" style={{ color: renk }}>
+              {esya.paket_ad}
+            </h3>
+          </div>
           <span className="rozet" style={{ color: "var(--ok)" }}>
-            ✓ Etkin
+            {esya.bitis ? "✓ Etkin" : "✓ Teslim edildi"}
+          </span>
+        </div>
+
+        <dl className="esya-bilgi">
+          <div>
+            <dt>Oyuncu</dt>
+            <dd className="mono">{esya.nick}</dd>
+          </div>
+          {esya.bitis ? (
+            <>
+              <div>
+                <dt>Bitiş</dt>
+                <dd>{tarihYaz(esya.bitis)}</dd>
+              </div>
+              <div>
+                <dt>Kalan</dt>
+                <dd style={{ color: kalan <= 3 ? "var(--err)" : "var(--text)" }}>{kalan} gün</dd>
+              </div>
+            </>
+          ) : (
+            <div>
+              <dt>Teslim</dt>
+              <dd>{tarihYaz(esya.etkinlestirme)}</dd>
+            </div>
+          )}
+        </dl>
+      </div>
+    );
+  }
+
+  /* Yetkili işlemi bekleyen eşya (blacklist affı gibi) */
+  if (esya.durum === "yetkili") {
+    return (
+      <div className="esya">
+        <span className="esya-serit" style={{ background: "var(--amber)" }} />
+        <div className="esya-ust">
+          <div>
+            <span className="kategori-rozet">{KATEGORI_ADI[kategori] || "Ürün"}</span>
+            <h3 className="esya-ad" style={{ color: renk }}>
+              {esya.paket_ad}
+            </h3>
+          </div>
+          <span className="rozet" style={{ color: "var(--amber)" }}>
+            Yetkili bekleniyor
           </span>
         </div>
 
@@ -73,14 +137,24 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
             <dd className="mono">{esya.nick}</dd>
           </div>
           <div>
-            <dt>Bitiş</dt>
-            <dd>{tarihYaz(esya.bitis)}</dd>
-          </div>
-          <div>
-            <dt>Kalan</dt>
-            <dd style={{ color: kalan <= 3 ? "var(--err)" : "var(--text)" }}>{kalan} gün</dd>
+            <dt>Talep tarihi</dt>
+            <dd>{tarihYaz(esya.etkinlestirme)}</dd>
           </div>
         </dl>
+
+        <p className="sonuk kucuk" style={{ marginTop: 12 }}>
+          Talebin ekibe iletildi. Discord'dan destek talebi açarsan işlem daha hızlı tamamlanır.
+        </p>
+
+        <a
+          href={SUNUCU.discord}
+          target="_blank"
+          rel="noreferrer"
+          className="dugme dugme-mor dugme-genis"
+          style={{ marginTop: 14 }}
+        >
+          Discord'dan destek aç
+        </a>
       </div>
     );
   }
@@ -91,9 +165,12 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
       <div className="esya">
         <span className="esya-serit" style={{ background: "var(--err)" }} />
         <div className="esya-ust">
-          <h3 className="esya-ad" style={{ color: renk }}>
-            {esya.paket_ad}
-          </h3>
+          <div>
+            <span className="kategori-rozet">{KATEGORI_ADI[kategori] || "Ürün"}</span>
+            <h3 className="esya-ad" style={{ color: renk }}>
+              {esya.paket_ad}
+            </h3>
+          </div>
           <span className="rozet" style={{ color: "var(--err)" }}>
             Hata
           </span>
@@ -133,17 +210,18 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
     <div className="esya">
       <span className="esya-serit" style={{ background: renk }} />
       <div className="esya-ust">
-        <h3 className="esya-ad" style={{ color: renk }}>
-          {esya.paket_ad}
-        </h3>
+        <div>
+          <span className="kategori-rozet">{KATEGORI_ADI[kategori] || "Ürün"}</span>
+          <h3 className="esya-ad" style={{ color: renk }}>
+            {esya.paket_ad}
+          </h3>
+        </div>
         <span className="rozet" style={{ color: "var(--amber)" }}>
           Kullanılmadı
         </span>
       </div>
 
-      <p className="sonuk kucuk">
-        {sure} gün süreyle geçerli. Süre, etkinleştirdiğin andan itibaren başlar.
-      </p>
+      <p className="sonuk kucuk">{aciklamaYaz(kategori, sure, Boolean(urun?.elle))}</p>
 
       {!acik ? (
         <button
@@ -158,7 +236,7 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
           {hata && <div className="uyari uyari-hata">{hata}</div>}
 
           <div className="alan">
-            <label htmlFor={`nick-${esya.id}`}>Paket hangi nicke tanımlansın?</label>
+            <label htmlFor={`nick-${esya.id}`}>Hangi nicke tanımlansın?</label>
             <input
               id={`nick-${esya.id}`}
               value={nick}
@@ -234,24 +312,24 @@ export default function SandikSayfasi() {
     );
   }
 
-  const bekleyen = esyalar.filter((e) => e.durum !== "etkin").length;
+  const bekleyen = esyalar.filter((e) => e.durum === "bekliyor" || e.durum === "hata").length;
 
   return (
     <section className="bolum" style={{ borderTop: "none" }}>
       <div className="kapsayici">
         <div className="bolum-bas">
           <p className="gozkasi">Sandık</p>
-          <h1 className="baslik-l">Paketlerin</h1>
+          <h1 className="baslik-l">Eşyaların</h1>
           <p>
-            Satın aldığın paketler burada birikir. Etkinleştirdiğin an oyun içi hesabına tanımlanır ve
-            süre başlar — hazır olmadan açmana gerek yok.
+            Satın aldığın rütbeler, kasa anahtarları, set kitleri ve aflar burada birikir.
+            Etkinleştirdiğin an oyun içi hesabına otomatik tanımlanır — hazır olmadan açmana gerek yok.
           </p>
         </div>
 
         {bekleyen > 0 && (
           <div className="bakiye-serit" style={{ marginBottom: 24 }}>
             <span className="bakiye-etiket">Kullanılmayı bekleyen</span>
-            <span className="bakiye-deger">{bekleyen} paket</span>
+            <span className="bakiye-deger">{bekleyen} eşya</span>
           </div>
         )}
 
@@ -262,7 +340,7 @@ export default function SandikSayfasi() {
             <div>
               <h2 className="baslik-m">Sandığın boş</h2>
               <p>
-                Mağazadan bir paket aldığında ve yetkili ekibi onayladığında burada görünecek.
+                Mağazadan bir ürün aldığında ve ödemen onaylandığında burada görünecek.
               </p>
             </div>
             <Link href="/magaza" className="dugme dugme-vurgu">

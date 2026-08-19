@@ -411,6 +411,66 @@ Dürüst olmak gerekirse birkaç şey hâlâ dışarıda:
 
 ---
 
+## Kasalar, kitler, unban ve blacklist affı
+
+### Kurulum
+
+**1.** Supabase → SQL Editor → **URUNLER.sql** çalıştır. (Önce KURULUM, KREDI ve SANDIK çalışmış olmalı.)
+
+**2.** Bitti. Mağaza sayfasında **VIP Paketleri / Kasalar / Set Kitleri / Unban & Blacklist Affı** sekmeleri görünür.
+
+### Ürünleri düzenlemek
+
+Hepsi `lib/ayarlar.js` içinde, üç liste hâlinde:
+
+| Liste | İçindekiler | Oyuna giden komut |
+|---|---|---|
+| `KASALAR` | Kit Kasası, Nihai Kasası | `crate key give {nick} {kasa} {adet}` |
+| `KITLER` | Cadı Kit, Evoker Kit | `kitver {nick} {kit}` |
+| `AFLAR` | Unban, Blacklist Affı | `unban {nick}` / *(blacklist elle)* |
+
+Her ürünün `komutlar` alanı var, istediğin komutu yazabilirsin. Komutların başına `/` **koyma** — RCON zaten konsoldan çalıştırıyor.
+
+Kullanabileceğin yer tutucular: `{nick}` `{kasa}` `{kit}` `{adet}` `{grup}` `{sure}`
+
+Bir ürüne birden fazla komut vermek istersen listeye ekle:
+
+```js
+komutlar: ["unban {nick}", "broadcast {nick} affedildi!"],
+```
+
+### Elle işlenen ürünler
+
+**Blacklist Affı** sunucuya komut göndermez. Ürünün ayarında `elle: true` var. Oyuncu sandıktan etkinleştirdiğinde:
+
+1. Eşya **"Yetkili bekleniyor"** durumuna geçer, oyuncuya Discord'dan destek açması söylenir
+2. Discord kanalına ⚠️ bildirimi düşer (oyuncunun nicki ve e-postasıyla)
+3. Sen kara liste kaydını elle silersin — sitede yapman gereken bir şey yok
+
+Başka bir ürünü de elle işlemek istersen ona `elle: true` eklemen yeterli. Otomatiğe çevirmek için `elle` satırını sil ve `komutlar` alanını doldur.
+
+### ⚠️ Fiyat değiştirirken
+
+Fiyat **iki yerde** tutuluyor:
+
+1. `lib/ayarlar.js` → ürünün `fiyat` alanı (ekranda görünen)
+2. Supabase `paketler` tablosu (asıl kesinti bundan yapılır)
+
+İkisini de değiştir, yoksa oyuncu 60₺'lik kasayı eski fiyattan alır. Tablodakini güncellemek için `URUNLER.sql` içindeki fiyatı düzeltip dosyayı tekrar çalıştırman yeterli.
+
+### Yeni kasa veya kit eklemek
+
+`lib/ayarlar.js` içindeki listeye yeni bir nesne ekle, sonra `URUNLER.sql`'e aynı `id` ve `fiyat` ile bir satır ekleyip çalıştır. `id` değerlerini `kasa_`, `kit_`, `af_` önekiyle yazarsan kategori otomatik doğru atanır.
+
+### Yönetim panelinde takip
+
+Yönetim → **Sandık** sekmesi: kim ne aldı, hangi nicke etkinleştirdi, ne zaman, komut başarılı mı. Tür (Kasa/Kit/Af/Rütbe) ve durum filtreleri var. Hata alan kayıtlar kırmızı görünür — onları oyun içinde elle vermen gerekir.
+
+Her etkinleştirme ayrıca Discord'a bildirim olarak düşer ve `guvenlik_kayitlari` tablosuna `urun_etkinlestirildi` olarak yazılır.
+
+
+---
+
 ## Sandık sistemi ve etkinlikler
 
 ### Kurulum

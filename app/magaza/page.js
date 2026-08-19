@@ -1,24 +1,24 @@
-import PaketListesi from "../../components/PaketListesi";
+import MagazaSekmeleri from "../../components/MagazaSekmeleri";
 import KrediBolumu from "../../components/KrediBolumu";
 import { SUNUCU } from "../../lib/ayarlar";
 
 export const metadata = {
   title: `Mağaza — ${SUNUCU.ad}`,
-  description: "Shio Network VIP paketleri: VIP, MVP, SVIP ve Sponsor.",
+  description: "Shio Network mağazası: VIP paketleri, kasalar, set kitleri, unban ve blacklist affı.",
 };
 
 const ADIMLAR = [
   {
-    baslik: "Paketini seç",
-    metin: "Aşağıdaki paketlerden birinin satın alma butonuna bas.",
+    baslik: "Ürününü seç",
+    metin: "Sekmelerden bölümü seç, istediğin ürünün satın alma butonuna bas.",
   },
   {
     baslik: "Ödemeyi yap",
     metin: "Ödeme sayfasında oyun içi nickini eksiksiz yaz. Paketin bu nicke tanımlanır.",
   },
   {
-    baslik: "Paketin tanımlansın",
-    metin: "Ödeme onaylandıktan sonra yetkili ekibi paketini hesabına işler ve Discord'dan bilgi verir.",
+    baslik: "Sandıktan etkinleştir",
+    metin: "Ödemen onaylanınca ürün sandığına düşer. Sandıktan etkinleştirdiğin an oyuna otomatik tanımlanır.",
   },
 ];
 
@@ -29,10 +29,10 @@ export default function MagazaSayfasi() {
         <div className="kapsayici">
           <div className="bolum-bas">
             <p className="gozkasi">Mağaza</p>
-            <h1 className="baslik-l">VIP paketleri</h1>
+            <h1 className="baslik-l">Tüm ürünler</h1>
             <p>
-              Dört paket var, hepsi tek seferlik ödemeyle alınır ve hesabında süresiz kalır. Üst paketler alt paketlerin
-              tüm ayrıcalıklarını kapsar.
+              Rütbeler, kasa anahtarları, set kitleri ve ceza afları. Aldığın her ürün sandığına düşer;
+              hazır olduğunda etkinleştirir, oyun içinde anında alırsın.
             </p>
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function MagazaSayfasi() {
 
       <section className="bolum" style={{ borderTop: "none", paddingTop: 40 }}>
         <div className="kapsayici">
-          <PaketListesi />
+          <MagazaSekmeleri />
         </div>
       </section>
 

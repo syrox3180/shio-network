@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { SUNUCU, uyelikAktif } from "../lib/ayarlar";
 import { benKim } from "../lib/kimlik";
@@ -22,7 +23,14 @@ export default function Ust() {
     <header className="ust">
       <div className="kapsayici ust-ic">
         <Link href="/" className="logo" onClick={kapat}>
-          <span className="logo-kup" aria-hidden="true" />
+          <Image
+            className="logo-resim"
+            src="/logo-kucuk.png"
+            alt=""
+            width={512}
+            height={514}
+            priority
+          />
           SHIO <span>NETWORK</span>
         </Link>
 

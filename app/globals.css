@@ -1694,3 +1694,124 @@ button.dugme:disabled:hover {
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 18px;
 }
+
+/* ---------- Mağaza sekmeleri ---------- */
+.magaza-sekmeler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.magaza-sekme {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--cizgi, rgba(255, 255, 255, 0.1));
+  background: transparent;
+  color: var(--muted, #98a2b3);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.magaza-sekme:hover {
+  color: var(--text, #fff);
+  border-color: rgba(157, 92, 255, 0.45);
+}
+
+.magaza-sekme.aktif {
+  color: var(--text, #fff);
+  border-color: var(--amethyst, #9d5cff);
+  background: rgba(157, 92, 255, 0.12);
+}
+
+.magaza-sekme-sayi {
+  font-size: 0.76rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted, #98a2b3);
+}
+
+.magaza-sekme.aktif .magaza-sekme-sayi {
+  background: rgba(157, 92, 255, 0.25);
+  color: var(--text, #fff);
+}
+
+.magaza-aciklama {
+  margin-bottom: 26px;
+}
+
+.magaza-aciklama p {
+  margin-top: 6px;
+  max-width: 62ch;
+}
+
+/* ---------- Kategori rozeti ---------- */
+.kategori-rozet {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted, #98a2b3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- Hero logosu ---------- */
+.hero-ic {
+  text-align: center;
+}
+
+.hero-ic .baslik-xl,
+.hero-ic p.giris {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-ic .ip-alan,
+.hero-ic .hero-alt,
+.hero-ic .rozet-satir {
+  justify-content: center;
+}
+
+.hero-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 26px;
+}
+
+.hero-logo img {
+  width: 260px;
+  height: auto;
+  border-radius: 28px;
+  border: 1px solid rgba(90, 170, 255, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 22px 60px -18px rgba(40, 130, 255, 0.55);
+}
+
+@media (max-width: 720px) {
+  .hero-logo img {
+    width: 190px;
+    border-radius: 22px;
+  }
+}
+
+/* Üst menüdeki küçük logo */
+.logo-resim {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 1px solid rgba(90, 170, 255, 0.3);
+}

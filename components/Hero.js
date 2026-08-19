@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { SUNUCU } from "../lib/ayarlar";
 
 /* Tıklayınca kopyalanan, blok gibi "kırılan" IP kutusu */
@@ -83,6 +84,17 @@ export default function Hero() {
   return (
     <section className="hero">
       <div className="kapsayici hero-ic">
+        <div className="hero-logo">
+          <Image
+            src="/logo.png"
+            alt={`${SUNUCU.ad} logosu`}
+            width={800}
+            height={802}
+            priority
+            sizes="(max-width: 720px) 200px, 260px"
+          />
+        </div>
+
         <p className="gozkasi">Türk boxmining sunucusu · {SUNUCU.surum}</p>
 
         <h1 className="baslik-xl">

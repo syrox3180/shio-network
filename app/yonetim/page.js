@@ -6,7 +6,15 @@ import { uyelikAktif } from "../../lib/ayarlar";
 import { benKim } from "../../lib/kimlik";
 import IkiFaktor from "../../components/IkiFaktor";
 import EtkinlikYonetimi from "../../components/EtkinlikYonetimi";
-import { tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla } from "../../lib/veritabani";
+import { tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla, tumEnvanter } from "../../lib/veritabani";
+import { urunBul, urunKategorisi, KATEGORI_ADI } from "../../lib/ayarlar";
+
+const ENVANTER_ETIKET = {
+  bekliyor: { metin: "Kullanılmadı", renk: "#98a2b3" },
+  etkin: { metin: "Etkinleştirildi", renk: "#5fbf8b" },
+  yetkili: { metin: "Elle işlem bekliyor", renk: "#f0a63c" },
+  hata: { metin: "Hata", renk: "#ef5a6f" },
+};
 
 const DURUM_ETIKET = {
   bekliyor: { metin: "Bekliyor", renk: "#f0a63c" },
@@ -32,6 +40,8 @@ export default function YonetimSayfasi() {
   const [sekme, setSekme] = useState("siparisler");
   const [siparisler, setSiparisler] = useState([]);
   const [uyeler, setUyeler] = useState([]);
+  const [envanter, setEnvanter] = useState([]);
+  const [sandikFiltre, setSandikFiltre] = useState("hepsi");
   const [filtre, setFiltre] = useState("hepsi");
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState("");
@@ -39,9 +49,10 @@ export default function YonetimSayfasi() {
   const verileriCek = useCallback(async () => {
     setYukleniyor(true);
     try {
-      const [s, u] = await Promise.all([tumSiparisler(), uyeleriGetir()]);
+      const [s, u, e] = await Promise.all([tumSiparisler(), uyeleriGetir(), tumEnvanter()]);
       setSiparisler(s || []);
       setUyeler(u || []);
+      setEnvanter(e || []);
       setHata("");
     } catch (err) {
       setHata("Veriler alınamadı. Sayfayı yenilemeyi dene.");
@@ -171,6 +182,12 @@ export default function YonetimSayfasi() {
   const gosterilen =
     filtre === "hepsi" ? siparisler : siparisler.filter((s) => s.durum === filtre);
 
+  const sandikGosterilen = envanter.filter((e) => {
+    if (sandikFiltre === "hepsi") return true;
+    if (["etkin", "bekliyor", "hata", "yetkili"].includes(sandikFiltre)) return e.durum === sandikFiltre;
+    return urunKategorisi(urunBul(e.paket_id)) === sandikFiltre;
+  });
+
   const bekleyen = siparisler.filter((s) => s.durum === "bekliyor").length;
   const teslim = siparisler.filter((s) => s.durum === "teslim").length;
   const ciro = siparisler
@@ -209,6 +226,18 @@ export default function YonetimSayfasi() {
             </span>
           </div>
           <div className="panel-kutu">
+            <span className="etiket">Elle işlem bekleyen</span>
+            <span className="deger" style={{ fontSize: "1.6rem", color: "var(--amber)" }}>
+              {envanter.filter((e) => e.durum === "yetkili").length}
+            </span>
+          </div>
+          <div className="panel-kutu">
+            <span className="etiket">Etkinleştirilen</span>
+            <span className="deger" style={{ fontSize: "1.6rem", color: "var(--ok)" }}>
+              {envanter.filter((e) => e.durum === "etkin").length}
+            </span>
+          </div>
+          <div className="panel-kutu">
             <span className="etiket">Kayıtlı üye</span>
             <span className="deger" style={{ fontSize: "1.6rem" }}>{uyeler.length}</span>
           </div>
@@ -226,6 +255,12 @@ export default function YonetimSayfasi() {
             onClick={() => setSekme("uyeler")}
           >
             Üyeler ({uyeler.length})
+          </button>
+          <button
+            className={sekme === "sandik" ? "sekme aktif" : "sekme"}
+            onClick={() => setSekme("sandik")}
+          >
+            Sandık ({envanter.length})
           </button>
           <button
             className={sekme === "etkinlik" ? "sekme aktif" : "sekme"}
@@ -364,6 +399,106 @@ export default function YonetimSayfasi() {
                 </table>
               </div>
             )}
+          </>
+        )}
+
+        {!yukleniyor && sekme === "sandik" && (
+          <>
+            <div className="filtreler">
+              {[
+                ["hepsi", "Hepsi"],
+                ["yetkili", "Elle işlem bekleyen"],
+                ["etkin", "Etkinleştirilen"],
+                ["bekliyor", "Kullanılmayan"],
+                ["hata", "Hata alan"],
+                ["kasa", "Kasalar"],
+                ["kit", "Kitler"],
+                ["af", "Aflar"],
+              ].map(([deger, etiket]) => (
+                <button
+                  key={deger}
+                  className={sandikFiltre === deger ? "filtre aktif" : "filtre"}
+                  onClick={() => setSandikFiltre(deger)}
+                >
+                  {etiket}
+                </button>
+              ))}
+            </div>
+
+            {sandikGosterilen.length === 0 ? (
+              <div className="bos-durum">
+                <p>Bu filtreye uyan kayıt yok.</p>
+              </div>
+            ) : (
+              <div className="tablo-sar">
+                <table className="tablo">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Üye</th>
+                      <th>Ürün</th>
+                      <th>Tür</th>
+                      <th>Verilen nick</th>
+                      <th>Etkinleştirme</th>
+                      <th>Bitiş</th>
+                      <th>Durum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sandikGosterilen.map((e) => {
+                      const sahip = uyeler.find((u) => u.id === e.kullanici_id);
+                      const kategori = urunKategorisi(urunBul(e.paket_id));
+                      return (
+                        <tr key={e.id}>
+                          <td className="mono sonuk">{e.id}</td>
+                          <td>
+                            <strong className="mono">{sahip?.nick || "—"}</strong>
+                            <br />
+                            <span className="sonuk kucuk">{sahip?.eposta || ""}</span>
+                          </td>
+                          <td>{e.paket_ad}</td>
+                          <td>
+                            <span className="kategori-rozet">
+                              {KATEGORI_ADI[kategori] || "Ürün"}
+                            </span>
+                          </td>
+                          <td className="mono">
+                            {e.nick || <span className="sonuk">—</span>}
+                          </td>
+                          <td className="sonuk kucuk">
+                            {e.etkinlestirme ? tarihYaz(e.etkinlestirme) : "—"}
+                          </td>
+                          <td className="sonuk kucuk">
+                            {e.bitis ? tarihYaz(e.bitis) : e.durum === "etkin" ? "Süresiz" : "—"}
+                          </td>
+                          <td>
+                            <span
+                              className="rozet"
+                              style={{ color: ENVANTER_ETIKET[e.durum]?.renk || "var(--muted)" }}
+                            >
+                              {ENVANTER_ETIKET[e.durum]?.metin || e.durum}
+                            </span>
+                            {e.hata_mesaji && (
+                              <>
+                                <br />
+                                <span className="sonuk kucuk">{e.hata_mesaji}</span>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p className="sonuk kucuk" style={{ marginTop: 18 }}>
+              Buradaki her satır bir oyuncunun sandığındaki eşyadır. "Etkinleştirildi" olanlar sunucuya
+              komut olarak gönderilmiş demektir. <strong>"Elle işlem bekliyor"</strong> olanlar (blacklist affı)
+              senin Discord üzerinden hallettiğin ürünlerdir — işi bitirince tabloda dokunman gereken bir şey
+              yok, kayıt geçmiş olarak kalır. Hata alanlar için oyun içinde elle vermen gerekir.
+            </p>
           </>
         )}
 

