@@ -1,6 +1,7 @@
 import MagazaSekmeleri from "../../components/MagazaSekmeleri";
 import KrediBolumu from "../../components/KrediBolumu";
 import { SUNUCU } from "../../lib/ayarlar";
+import DiscordSayac from "../../components/DiscordSayac";
 
 export const metadata = {
   title: `Mağaza — ${SUNUCU.ad}`,
@@ -72,6 +73,7 @@ export default function MagazaSayfasi() {
                 Paketin tanımlanmadıysa veya ödeme sırasında bir aksilik olduysa Discord sunucumuzdan destek talebi aç.
                 Ödeme dekontunu ve nickini yazman yeterli.
               </p>
+              <DiscordSayac />
             </div>
             <a href={SUNUCU.discord} target="_blank" rel="noreferrer" className="dugme dugme-mor">
               Destek al

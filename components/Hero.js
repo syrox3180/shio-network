@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { SUNUCU } from "../lib/ayarlar";
+import DiscordSayac from "./DiscordSayac";
 
 /* Tıklayınca kopyalanan, blok gibi "kırılan" IP kutusu */
 function IpKutusu() {
@@ -108,6 +109,7 @@ export default function Hero() {
         <div className="ip-alan">
           <IpKutusu />
           <DurumKutusu />
+          <DiscordSayac kutu />
         </div>
 
         <div className="hero-alt">

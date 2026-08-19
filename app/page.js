@@ -2,6 +2,7 @@ import Link from "next/link";
 import Hero from "../components/Hero";
 import PaketListesi from "../components/PaketListesi";
 import { OZELLIKLER, SUNUCU } from "../lib/ayarlar";
+import DiscordSayac from "../components/DiscordSayac";
 
 export default function AnaSayfa() {
   return (
@@ -59,6 +60,7 @@ export default function AnaSayfa() {
                 Duyurular, etkinlikler, yetkili başvuruları ve destek talepleri Discord sunucumuzda. Bir sorunun olursa
                 en hızlı cevabı buradan alırsın.
               </p>
+              <DiscordSayac />
             </div>
             <a href={SUNUCU.discord} target="_blank" rel="noreferrer" className="dugme dugme-mor">
               Sunucuya katıl

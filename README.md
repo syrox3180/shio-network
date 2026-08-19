@@ -411,6 +411,38 @@ Dürüst olmak gerekirse birkaç şey hâlâ dışarıda:
 
 ---
 
+## Discord üye sayacı
+
+Ana sayfa ve mağazada Discord üye sayısı canlı görünür. **Bot kurmana, token almana gerek yok** — sayı Discord'un davet API'sinden geliyor.
+
+### Çalışması için tek şart
+
+`lib/ayarlar.js` içindeki `discord` linkinin **süresiz** bir davet olması:
+
+Discord → sunucuya sağ tık → **Davet Et** → ⚙️ **Bağlantı ayarlarını düzenle** → **Süre: Asla**, **Kullanım sayısı: Sınırsız** → oluştur, linki `ayarlar.js`'e yapıştır.
+
+Davet linki süresi dolarsa sayaç susar, site çalışmaya devam eder.
+
+### Yedek yöntem (isteğe bağlı)
+
+Davet API'si bir gün kapanırsa diye widget yedeği var. Açmak için:
+
+Discord → **Sunucu Ayarları** → **Widget** → *Sunucu Widget'ını Etkinleştir* aç.
+
+İstersen Vercel'e `DISCORD_SUNUCU_ID` değişkenini de ekleyebilirsin (Discord'da Geliştirici Modu açıkken sunucuya sağ tık → Sunucu Kimliğini Kopyala). Zorunlu değil.
+
+### Nasıl işliyor
+
+- Site 60 saniyede bir sayıyı tazeler
+- Sunucu tarafında da 60 saniyelik önbellek var — kaç kişi siteyi açarsa açsın Discord'a dakikada 1 istek gider, hız sınırına takılmaz
+- Sekme arka plandayken istek atılmaz, kullanıcı geri döndüğünde anında güncellenir
+- Discord'a ulaşılamazsa son bilinen sayı gösterilir, ekranda boşluk oluşmaz
+
+Toplam üye ve o an çevrimiçi olan sayısı ayrı ayrı görünür.
+
+
+---
+
 ## Kasalar, kitler, unban ve blacklist affı
 
 ### Kurulum
