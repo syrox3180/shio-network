@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { uyelikAktif, SUNUCU, urunBul, urunKategorisi, KATEGORI_ADI } from "../../lib/ayarlar";
+import { uyelikAktif, SUNUCU, urunBul, urunKategorisi, KATEGORI_ADI, OYUN_MODLARI, modAdi } from "../../lib/ayarlar";
 import { benKim } from "../../lib/kimlik";
 import { sandigimiGetir, esyaEtkinlestir } from "../../lib/veritabani";
 import { NICK_KURALI } from "../../lib/sifre";
@@ -34,9 +34,31 @@ function kalanGun(bitis) {
   return Math.max(0, Math.ceil((new Date(bitis) - Date.now()) / 86400000));
 }
 
+function ModSecici({ deger, onDegis, id }) {
+  return (
+    <div className="alan">
+      <label htmlFor={id}>Hangi sunucuya etkinleştirilsin?</label>
+      <div className="filtreler" role="radiogroup" aria-label="Sunucu seç" id={id}>
+        {OYUN_MODLARI.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            className={deger === m.id ? "filtre aktif" : "filtre"}
+            onClick={() => onDegis(m.id)}
+            aria-pressed={deger === m.id}
+          >
+            {m.ad}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
   const [acik, setAcik] = useState(false);
   const [nick, setNick] = useState(varsayilanNick || "");
+  const [mod, setMod] = useState("");
   const [hata, setHata] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
 
@@ -50,6 +72,11 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
     e.preventDefault();
     setHata("");
 
+    if (!mod) {
+      setHata("Önce hangi sunucuya (Boxmining / Prac) etkinleştirileceğini seç.");
+      return;
+    }
+
     if (!NICK_KURALI.test(nick.trim())) {
       setHata("Nick 3-16 karakter olmalı, sadece harf, rakam ve alt çizgi.");
       return;
@@ -57,7 +84,7 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
 
     setBekliyor(true);
     try {
-      const sonuc = await esyaEtkinlestir(esya.id, nick.trim());
+      const sonuc = await esyaEtkinlestir(esya.id, nick.trim(), mod);
       await onGuncelle();
       if (sonuc?.elle && sonuc?.mesaj) {
         alert(sonuc.mesaj);
@@ -91,6 +118,10 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
           <div>
             <dt>Oyuncu</dt>
             <dd className="mono">{esya.nick}</dd>
+          </div>
+          <div>
+            <dt>Sunucu</dt>
+            <dd>{modAdi(esya.sunucu)}</dd>
           </div>
           {esya.bitis ? (
             <>
@@ -135,6 +166,10 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
           <div>
             <dt>Oyuncu</dt>
             <dd className="mono">{esya.nick}</dd>
+          </div>
+          <div>
+            <dt>Sunucu</dt>
+            <dd>{modAdi(esya.sunucu)}</dd>
           </div>
           <div>
             <dt>Talep tarihi</dt>
@@ -185,6 +220,7 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
         {acik && (
           <form onSubmit={etkinlestir} style={{ marginTop: 14 }}>
             {hata && <div className="uyari uyari-hata">{hata}</div>}
+            <ModSecici deger={mod} onDegis={setMod} id={`mod-${esya.id}`} />
             <div className="alan">
               <label htmlFor={`nick-${esya.id}`}>Oyun içi nick</label>
               <input
@@ -234,6 +270,8 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
       ) : (
         <form onSubmit={etkinlestir} style={{ marginTop: 16 }}>
           {hata && <div className="uyari uyari-hata">{hata}</div>}
+
+          <ModSecici deger={mod} onDegis={setMod} id={`mod-${esya.id}`} />
 
           <div className="alan">
             <label htmlFor={`nick-${esya.id}`}>Hangi nicke tanımlansın?</label>

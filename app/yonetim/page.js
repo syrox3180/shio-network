@@ -7,7 +7,7 @@ import { benKim } from "../../lib/kimlik";
 import IkiFaktor from "../../components/IkiFaktor";
 import EtkinlikYonetimi from "../../components/EtkinlikYonetimi";
 import { tumSiparisler, siparisGuncelle, uyeleriGetir, krediAyarla, tumEnvanter } from "../../lib/veritabani";
-import { urunBul, urunKategorisi, KATEGORI_ADI } from "../../lib/ayarlar";
+import { urunBul, urunKategorisi, KATEGORI_ADI, modAdi } from "../../lib/ayarlar";
 
 const ENVANTER_ETIKET = {
   bekliyor: { metin: "Kullanılmadı", renk: "#98a2b3" },
@@ -438,6 +438,7 @@ export default function YonetimSayfasi() {
                       <th>Üye</th>
                       <th>Ürün</th>
                       <th>Tür</th>
+                      <th>Sunucu</th>
                       <th>Verilen nick</th>
                       <th>Etkinleştirme</th>
                       <th>Bitiş</th>
@@ -461,6 +462,9 @@ export default function YonetimSayfasi() {
                             <span className="kategori-rozet">
                               {KATEGORI_ADI[kategori] || "Ürün"}
                             </span>
+                          </td>
+                          <td className="mono kucuk">
+                            {e.sunucu ? modAdi(e.sunucu) : <span className="sonuk">—</span>}
                           </td>
                           <td className="mono">
                             {e.nick || <span className="sonuk">—</span>}

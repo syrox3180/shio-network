@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 
 /* Cevher renkleri — mor ağırlıklı, brand'e sadık */
 const CEVHERLER = [
-  { ad: "ametist", zemin: "rgba(157, 92, 255, 0.20)", golge: "inset 0 0 26px rgba(157, 92, 255, 0.50), 0 0 20px rgba(157, 92, 255, 0.16)" },
-  { ad: "ametist", zemin: "rgba(157, 92, 255, 0.20)", golge: "inset 0 0 26px rgba(157, 92, 255, 0.50), 0 0 20px rgba(157, 92, 255, 0.16)" },
-  { ad: "zumrut", zemin: "rgba(95, 191, 139, 0.18)", golge: "inset 0 0 26px rgba(95, 191, 139, 0.45), 0 0 20px rgba(95, 191, 139, 0.14)" },
-  { ad: "altin", zemin: "rgba(240, 166, 60, 0.18)", golge: "inset 0 0 26px rgba(240, 166, 60, 0.45), 0 0 20px rgba(240, 166, 60, 0.14)" },
-  { ad: "elmas", zemin: "rgba(79, 216, 232, 0.16)", golge: "inset 0 0 26px rgba(79, 216, 232, 0.42), 0 0 20px rgba(79, 216, 232, 0.12)" },
+  { ad: "safir", zemin: "rgba(47, 128, 237, 0.16)", golge: "inset 0 0 26px rgba(47, 128, 237, 0.35), 0 0 20px rgba(47, 128, 237, 0.12)" },
+  { ad: "safir", zemin: "rgba(47, 128, 237, 0.16)", golge: "inset 0 0 26px rgba(47, 128, 237, 0.35), 0 0 20px rgba(47, 128, 237, 0.12)" },
+  { ad: "zumrut", zemin: "rgba(31, 157, 99, 0.14)", golge: "inset 0 0 26px rgba(31, 157, 99, 0.3), 0 0 20px rgba(31, 157, 99, 0.1)" },
+  { ad: "altin", zemin: "rgba(184, 115, 15, 0.14)", golge: "inset 0 0 26px rgba(184, 115, 15, 0.3), 0 0 20px rgba(184, 115, 15, 0.1)" },
+  { ad: "elmas", zemin: "rgba(79, 190, 216, 0.14)", golge: "inset 0 0 26px rgba(79, 190, 216, 0.3), 0 0 20px rgba(79, 190, 216, 0.1)" },
 ];
 
 const HUCRE = 62; // blok boyutu (px)
@@ -83,7 +83,7 @@ function Parcaciklar() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const renkler = ["rgba(157, 92, 255, 0.85)", "rgba(240, 166, 60, 0.75)", "rgba(232, 227, 242, 0.5)"];
+    const renkler = ["rgba(47, 128, 237, 0.75)", "rgba(184, 115, 15, 0.55)", "rgba(91, 113, 137, 0.4)"];
     const liste = Array.from({ length: 34 }).map((_, i) => ({
       id: i,
       sol: Math.random() * 100,

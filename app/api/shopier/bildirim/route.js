@@ -10,8 +10,8 @@ function yonlendir(durum, siparisNo) {
     `<!doctype html><html lang="tr"><head><meta charset="utf-8">
      <meta http-equiv="refresh" content="0;url=${adres}">
      <title>Yönlendiriliyor…</title></head>
-     <body style="background:#0c0a12;color:#ede9f5;font-family:sans-serif;padding:40px">
-     Yönlendiriliyor… <a href="${adres}" style="color:#9d5cff">Devam et</a>
+     <body style="background:#eef6fc;color:#142438;font-family:sans-serif;padding:40px">
+     Yönlendiriliyor… <a href="${adres}" style="color:#2f80ed">Devam et</a>
      </body></html>`,
     { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
   );

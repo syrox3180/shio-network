@@ -507,9 +507,9 @@ Her etkinleştirme ayrıca Discord'a bildirim olarak düşer ve `guvenlik_kayitl
 
 ### Kurulum
 
-**1.** Supabase → SQL Editor → **SANDIK.sql** çalıştır.
+**1.** Supabase → SQL Editor → **SANDIK.sql** çalıştır, ardından **SANDIK-MOD.sql** çalıştır (Boxmining/Prac sunucu seçimi için gereken sütunu ekler).
 
-**2.** Minecraft sunucunda `server.properties` dosyasını aç:
+**2.** Boxmining ve Prac birbirinden tamamen ayrı sunucular olduğu için **ikisinde de** `server.properties` dosyasını aç:
 
 ```
 enable-rcon=true
@@ -517,28 +517,31 @@ rcon.port=25575
 rcon.password=buraya-uzun-ve-rastgele-bir-sifre
 ```
 
-Sunucuyu yeniden başlat.
+İkisini de yeniden başlat. (İki sunucu için farklı şifre kullanman önerilir.)
 
 **3.** Vercel → Settings → Environment Variables:
 
 | Key | Value |
 |---|---|
-| `RCON_HOST` | Sunucunun IP'si (`87.76.131.206`) |
-| `RCON_PORT` | `25575` |
-| `RCON_SIFRE` | server.properties'e yazdığın şifre |
+| `RCON_HOST_BOXMINING` | Boxmining sunucusunun IP'si |
+| `RCON_PORT_BOXMINING` | `25575` |
+| `RCON_SIFRE_BOXMINING` | Boxmining'in server.properties'ine yazdığın şifre |
+| `RCON_HOST_PRAC` | Prac sunucusunun IP'si |
+| `RCON_PORT_PRAC` | `25575` |
+| `RCON_SIFRE_PRAC` | Prac'ın server.properties'ine yazdığın şifre |
 
 Redeploy et.
 
-> ⚠️ RCON portunu güvenlik duvarında sadece gerekli yerlere aç, herkese açma. RCON şifresi çalınırsa sunucunda istediği komutu çalıştırabilirler. Uzun ve rastgele bir şifre kullan.
+> ⚠️ RCON portunu güvenlik duvarında sadece gerekli yerlere aç, herkese açma. RCON şifresi çalınırsa sunucunda istediği komutu çalıştırabilirler. Uzun ve rastgele bir şifre kullan, iki sunucu için de farklı şifre seç.
 
 ### Nasıl işliyor
 
 1. Oyuncu paketi satın alır
 2. Sen yönetim panelinden **Teslim et** dersin
 3. Paket otomatik olarak oyuncunun **Sandık** sayfasına düşer
-4. Oyuncu hazır olduğunda **Etkinleştir** der, nickini yazar
-5. Site sunucuya komutu gönderir, rütbe **30 gün** süreyle tanımlanır
-6. Sandıkta kalan gün sayısı görünür
+4. Oyuncu hazır olduğunda **Etkinleştir** der; önce **Boxmining** veya **Prac** sunucusunu seçer, sonra nickini yazar
+5. Site seçilen sunucuya komutu gönderir, rütbe **30 gün** süreyle tanımlanır
+6. Sandıkta kalan gün sayısı ve hangi sunucuya gönderildiği görünür
 
 Süre etkinleştirme anında başlar — oyuncu paketi alıp beklerse süresi boşa gitmez.
 

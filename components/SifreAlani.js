@@ -4,7 +4,7 @@ import { useState } from "react";
 import { sifrePuani } from "../lib/sifre";
 
 const ETIKETLER = ["", "Çok zayıf", "Zayıf", "İyi", "Güçlü"];
-const RENKLER = ["", "#ef5a6f", "#f0a63c", "#4fa8de", "#5fbf8b"];
+const RENKLER = ["", "#d1374e", "#b8730f", "#2f80ed", "#1f9d63"];
 
 export default function SifreAlani({
   id,

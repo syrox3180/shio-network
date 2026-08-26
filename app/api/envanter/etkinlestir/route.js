@@ -2,7 +2,7 @@ import { kullaniciAl } from "../../../../lib/oturum-sunucu";
 import { kaynakGecerli, istekIp, hizSiniri, olayKaydet, discordUyari } from "../../../../lib/guvenlik";
 import { yonetimIstek } from "../../../../lib/shopier";
 import { rconKomut } from "../../../../lib/rcon";
-import { urunBul, urunKomutlari, urunKategorisi, KATEGORI_ADI } from "../../../../lib/ayarlar";
+import { urunBul, urunKomutlari, urunKategorisi, KATEGORI_ADI, OYUN_MODLARI, modAdi } from "../../../../lib/ayarlar";
 import { NICK_KURALI } from "../../../../lib/sifre";
 
 export const runtime = "nodejs";
@@ -28,8 +28,16 @@ export async function POST(request) {
       );
     }
 
-    const { esyaId, nick } = await request.json();
+    const { esyaId, nick, sunucu } = await request.json();
     const temizNick = String(nick || "").trim();
+
+    // Hangi sunucuya gönderileceği (boxmining / prac) — geçerli bir değer olmalı
+    if (!OYUN_MODLARI.some((m) => m.id === sunucu)) {
+      return Response.json(
+        { hata: "Geçerli bir sunucu (Boxmining / Prac) seçmelisin." },
+        { status: 400 }
+      );
+    }
 
     // Komut enjeksiyonuna karşı katı kontrol
     if (!NICK_KURALI.test(temizNick)) {
@@ -66,6 +74,7 @@ export async function POST(request) {
         body: JSON.stringify({
           durum: "yetkili",
           nick: temizNick,
+          sunucu,
           etkinlestirme: new Date().toISOString(),
           bitis: null,
           hata_mesaji: null,
@@ -76,12 +85,12 @@ export async function POST(request) {
         kullaniciId: kullanici.id,
         eposta: kullanici.email,
         ip,
-        detay: { nick: temizNick, urun: esya.paket_ad, kategori },
+        detay: { nick: temizNick, urun: esya.paket_ad, kategori, sunucu },
       });
 
       await discordUyari(
         "⚠️ Elle işlem gerekiyor",
-        `**${temizNick}** oyuncusu **${esya.paket_ad}** ürününü etkinleştirdi.\n` +
+        `**${temizNick}** oyuncusu **${esya.paket_ad}** ürününü **${modAdi(sunucu)}** sunucusu için etkinleştirdi.\n` +
           `Bu ürün otomatik verilmiyor — kara liste kaydını elle silmen gerekiyor.\n\n` +
           `Üye: ${kullanici.email}`,
         0xf0a63c
@@ -109,25 +118,25 @@ export async function POST(request) {
     let cevap = "";
     try {
       for (const komut of komutlar) {
-        cevap = await rconKomut(komut);
+        cevap = await rconKomut(komut, sunucu);
       }
     } catch (err) {
       await yonetimIstek(`envanter?id=eq.${esya.id}`, {
         method: "PATCH",
         headers: { Prefer: "return=minimal" },
-        body: JSON.stringify({ durum: "hata", nick: temizNick, hata_mesaji: err.message }),
+        body: JSON.stringify({ durum: "hata", nick: temizNick, sunucu, hata_mesaji: err.message }),
       });
 
       await olayKaydet("etkinlestirme_hatasi", {
         kullaniciId: kullanici.id,
         eposta: kullanici.email,
         ip,
-        detay: { esyaId: esya.id, urun: esya.paket_ad, hata: err.message },
+        detay: { esyaId: esya.id, urun: esya.paket_ad, sunucu, hata: err.message },
       });
 
       await discordUyari(
         "Ürün etkinleştirilemedi",
-        `**${temizNick}** için **${esya.paket_ad}** verilemedi.\nSebep: ${err.message}\n\nOyun içinde elle vermen gerekiyor.`,
+        `**${temizNick}** için **${esya.paket_ad}** (${modAdi(sunucu)}) verilemedi.\nSebep: ${err.message}\n\nOyun içinde elle vermen gerekiyor.`,
         0xed4245
       );
 
@@ -149,6 +158,7 @@ export async function POST(request) {
       body: JSON.stringify({
         durum: "etkin",
         nick: temizNick,
+        sunucu,
         etkinlestirme: new Date().toISOString(),
         bitis,
         hata_mesaji: null,
@@ -163,6 +173,7 @@ export async function POST(request) {
         nick: temizNick,
         urun: esya.paket_ad,
         kategori,
+        sunucu,
         sure,
         komutlar,
       },
@@ -170,7 +181,7 @@ export async function POST(request) {
 
     await discordUyari(
       `${KATEGORI_ADI[kategori] || "Ürün"} etkinleştirildi`,
-      `**${temizNick}** oyuncusuna **${esya.paket_ad}** verildi${sureli ? ` (${sure} gün)` : ""}.\n\`${komutlar.join("\n")}\``,
+      `**${temizNick}** oyuncusuna **${modAdi(sunucu)}** sunucusunda **${esya.paket_ad}** verildi${sureli ? ` (${sure} gün)` : ""}.\n\`${komutlar.join("\n")}\``,
       0x5fbf8b
     );
 
