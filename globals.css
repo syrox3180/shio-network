@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base: #0e131c;
+  --color-deep: #090d14;
+  --color-surface: #151d2a;
+  --color-line: #22303f;
+  --color-ink: #e9eef6;
+  --color-muted: #8795ab;
+  --color-brand: #2f7df0;
+  --color-brand-dim: #1b4585;
+  --color-ok: #35c48a;
+  --radius-block: 3px;
+}
+
+@theme inline {
+  --font-display: var(--font-archivo);
+  --font-body: var(--font-manrope);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Zeminde cok hafif blok izgarasi */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
