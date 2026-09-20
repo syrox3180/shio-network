@@ -1,86 +1,79 @@
-import MagazaSekmeleri from "../../components/MagazaSekmeleri";
-import KrediBolumu from "../../components/KrediBolumu";
-import { SUNUCU } from "../../lib/ayarlar";
-import DiscordSayac from "../../components/DiscordSayac";
+"use client";
 
-export const metadata = {
-  title: `Mağaza — ${SUNUCU.ad}`,
-  description: "Shio Network mağazası: VIP paketleri, Raid Alert, unban ve blacklist affı.",
+import { Suspense } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { SUNUCU } from "../../lib/ayarlar";
+
+const DURUMLAR = {
+  basarili: {
+    baslik: "Ödemen alındı",
+    renk: "var(--ok)",
+    metin:
+      "Teşekkürler! Kredi aldıysan bakiyene çoktan yüklendi. VIP paketi aldıysan yetkili ekibi rütbeni en kısa sürede oyun içinde tanımlayacak.",
+  },
+  basarisiz: {
+    baslik: "Ödeme tamamlanmadı",
+    renk: "var(--err)",
+    metin:
+      "İşlem yarıda kaldı ya da banka onaylamadı. Hesabından para çekilmediyse tekrar deneyebilirsin.",
+  },
+  hata: {
+    baslik: "Bir sorun oluştu",
+    renk: "var(--amber)",
+    metin:
+      "Ödemen alınmış olabilir ama siparişini eşleştiremedik. Discord'dan destek talebi açarsan hemen kontrol ederiz.",
+  },
+  bilinmiyor: {
+    baslik: "Sipariş durumu",
+    renk: "var(--muted)",
+    metin: "Siparişinin güncel durumunu hesabım sayfasından takip edebilirsin.",
+  },
 };
 
-const ADIMLAR = [
-  {
-    baslik: "Ürününü seç",
-    metin: "Sekmelerden bölümü seç, istediğin ürünün satın alma butonuna bas.",
-  },
-  {
-    baslik: "Ödemeyi yap",
-    metin: "Ödeme sayfasında oyun içi nickini eksiksiz yaz. Paketin bu nicke tanımlanır.",
-  },
-  {
-    baslik: "Sandıktan etkinleştir",
-    metin: "Ödemen onaylanınca ürün sandığına düşer. Sandıktan etkinleştirdiğin an oyuna otomatik tanımlanır.",
-  },
-];
+function Icerik() {
+  const parametreler = useSearchParams();
+  const durum = parametreler.get("durum") || "bilinmiyor";
+  const no = parametreler.get("no");
+  const bilgi = DURUMLAR[durum] || DURUMLAR.bilinmiyor;
 
-export default function MagazaSayfasi() {
   return (
-    <>
-      <section className="bolum" style={{ borderTop: "none", paddingBottom: 0 }}>
-        <div className="kapsayici">
-          <div className="bolum-bas">
-            <p className="gozkasi">Mağaza</p>
-            <h1 className="baslik-l">Tüm ürünler</h1>
-            <p>
-              Rütbeler, Raid Alert ve ceza afları. Aldığın her ürün sandığına düşer;
-              hazır olduğunda etkinleştirir, oyun içinde anında alırsın.
-            </p>
-          </div>
+    <div className="form-sayfa">
+      <div className="form-kutu" style={{ textAlign: "center" }}>
+        <h1 style={{ color: bilgi.renk }}>{bilgi.baslik}</h1>
+        <p className="alt-metin">{bilgi.metin}</p>
+
+        {no && (
+          <p className="mono sonuk" style={{ marginBottom: 26 }}>
+            Sipariş no: #{no}
+          </p>
+        )}
+
+        <Link href="/panel" className="dugme dugme-mor dugme-genis">
+          Hesabıma git
+        </Link>
+
+        <p className="form-alt">
+          Sorun mu var?{" "}
+          <a href={SUNUCU.discord} target="_blank" rel="noreferrer">
+            Discord'dan yaz
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function OdemeSonucSayfasi() {
+  return (
+    <Suspense
+      fallback={
+        <div className="kapsayici" style={{ padding: "90px 24px" }}>
+          <p className="sonuk">Yükleniyor…</p>
         </div>
-      </section>
-
-      <section className="bolum" style={{ borderTop: "none", paddingTop: 40 }}>
-        <div className="kapsayici">
-          <MagazaSekmeleri />
-        </div>
-      </section>
-
-      <KrediBolumu />
-
-      <section className="bolum">
-        <div className="kapsayici">
-          <div className="bolum-bas">
-            <p className="gozkasi">Nasıl alınır</p>
-            <h2 className="baslik-l">Üç adım</h2>
-          </div>
-
-          <div className="kartlar">
-            {ADIMLAR.map((a, i) => (
-              <div className="kart" key={a.baslik}>
-                <p className="gozkasi" style={{ marginBottom: 12 }}>
-                  Adım {i + 1}
-                </p>
-                <h3>{a.baslik}</h3>
-                <p>{a.metin}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="discord-serit" style={{ marginTop: 44 }}>
-            <div>
-              <h2 className="baslik-m">Ödemede sorun mu çıktı?</h2>
-              <p>
-                Paketin tanımlanmadıysa veya ödeme sırasında bir aksilik olduysa Discord sunucumuzdan destek talebi aç.
-                Ödeme dekontunu ve nickini yazman yeterli.
-              </p>
-              <DiscordSayac />
-            </div>
-            <a href={SUNUCU.discord} target="_blank" rel="noreferrer" className="dugme dugme-mor">
-              Destek al
-            </a>
-          </div>
-        </div>
-      </section>
-    </>
+      }
+    >
+      <Icerik />
+    </Suspense>
   );
 }
