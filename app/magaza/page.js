@@ -5,7 +5,7 @@ import DiscordSayac from "../../components/DiscordSayac";
 
 export const metadata = {
   title: `Mağaza — ${SUNUCU.ad}`,
-  description: "Shio Network mağazası: VIP paketleri, kasalar, set kitleri, unban ve blacklist affı.",
+  description: "Shio Network mağazası: VIP paketleri, Raid Alert, unban ve blacklist affı.",
 };
 
 const ADIMLAR = [
@@ -32,7 +32,7 @@ export default function MagazaSayfasi() {
             <p className="gozkasi">Mağaza</p>
             <h1 className="baslik-l">Tüm ürünler</h1>
             <p>
-              Rütbeler, kasa anahtarları, set kitleri ve ceza afları. Aldığın her ürün sandığına düşer;
+              Rütbeler, Raid Alert ve ceza afları. Aldığın her ürün sandığına düşer;
               hazır olduğunda etkinleştirir, oyun içinde anında alırsın.
             </p>
           </div>

@@ -18,12 +18,10 @@ function tarihYaz(ham) {
 }
 
 function aciklamaYaz(kategori, sure, elleMi) {
-  if (kategori === "kasa")
-    return "Etkinleştirdiğinde kasa anahtarı oyun içi hesabına gönderilir. Süresi yok, istediğin zaman açarsın.";
-  if (kategori === "kit")
-    return "Etkinleştirdiğinde set doğrudan envanterine düşer. Etkinleştirmeden önce oyunda olmalısın.";
   if (kategori === "af" && elleMi)
     return "Bu ürün yetkili tarafından elle işleniyor. Etkinleştirdiğinde talebin ekibe iletilir, sonra Discord'dan destek talebi açarsın.";
+  if (elleMi)
+    return "Bu ürün yetkili tarafından elle teslim ediliyor. Etkinleştirdiğinde talebin ekibe iletilir, sonra Discord'dan destek talebi açarsın.";
   if (kategori === "af")
     return "Etkinleştirdiğin an cezan sunucudan otomatik kaldırılır. Nickini doğru yazdığından emin ol.";
   return `${sure} gün süreyle geçerli. Süre, etkinleştirdiğin andan itibaren başlar.`;
@@ -58,7 +56,7 @@ function ModSecici({ deger, onDegis, id }) {
 function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
   const [acik, setAcik] = useState(false);
   const [nick, setNick] = useState(varsayilanNick || "");
-  const [mod, setMod] = useState("");
+  const [mod, setMod] = useState(OYUN_MODLARI.length === 1 ? OYUN_MODLARI[0].id : "");
   const [hata, setHata] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
 
@@ -73,7 +71,7 @@ function EsyaKarti({ esya, varsayilanNick, onGuncelle }) {
     setHata("");
 
     if (!mod) {
-      setHata("Önce hangi sunucuya (Boxmining / Prac) etkinleştirileceğini seç.");
+      setHata("Önce hangi sunucuya (GenPvP) etkinleştirileceğini seç.");
       return;
     }
 
@@ -359,7 +357,7 @@ export default function SandikSayfasi() {
           <p className="gozkasi">Sandık</p>
           <h1 className="baslik-l">Eşyaların</h1>
           <p>
-            Satın aldığın rütbeler, kasa anahtarları, set kitleri ve aflar burada birikir.
+            Satın aldığın rütbeler, Raid Alert ve aflar burada birikir.
             Etkinleştirdiğin an oyun içi hesabına otomatik tanımlanır — hazır olmadan açmana gerek yok.
           </p>
         </div>

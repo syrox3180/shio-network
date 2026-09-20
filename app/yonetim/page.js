@@ -411,8 +411,6 @@ export default function YonetimSayfasi() {
                 ["etkin", "Etkinleştirilen"],
                 ["bekliyor", "Kullanılmayan"],
                 ["hata", "Hata alan"],
-                ["kasa", "Kasalar"],
-                ["kit", "Kitler"],
                 ["af", "Aflar"],
               ].map(([deger, etiket]) => (
                 <button

@@ -31,10 +31,10 @@ export async function POST(request) {
     const { esyaId, nick, sunucu } = await request.json();
     const temizNick = String(nick || "").trim();
 
-    // Hangi sunucuya gönderileceği (boxmining / prac) — geçerli bir değer olmalı
+    // Hangi sunucuya gönderileceği (genpvp) — geçerli bir değer olmalı
     if (!OYUN_MODLARI.some((m) => m.id === sunucu)) {
       return Response.json(
-        { hata: "Geçerli bir sunucu (Boxmining / Prac) seçmelisin." },
+        { hata: "Geçerli bir sunucu (GenPvP) seçmelisin." },
         { status: 400 }
       );
     }
@@ -61,7 +61,7 @@ export async function POST(request) {
     const urun = urunBul(esya.paket_id);
     const kategori = urunKategorisi(urun);
 
-    // Rütbelerde süre var, kasa/kit/af tek kullanımlık ve süresiz
+    // Rütbelerde süre var, af tek kullanımlık ve süresiz
     const sureli = kategori === "rutbe";
     const sure = sureli ? urun?.sureGun || 30 : null;
 
@@ -91,7 +91,7 @@ export async function POST(request) {
       await discordUyari(
         "⚠️ Elle işlem gerekiyor",
         `**${temizNick}** oyuncusu **${esya.paket_ad}** ürününü **${modAdi(sunucu)}** sunucusu için etkinleştirdi.\n` +
-          `Bu ürün otomatik verilmiyor — kara liste kaydını elle silmen gerekiyor.\n\n` +
+          `Bu ürün otomatik verilmiyor — ${urun.elleNot || "elle teslim etmen gerekiyor."}\n\n` +
           `Üye: ${kullanici.email}`,
         0xf0a63c
       );

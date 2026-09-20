@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import PaketKarti from "./PaketKarti";
-import { PAKETLER, KASALAR, KITLER, AFLAR, uyelikAktif } from "../lib/ayarlar";
+import { PAKETLER, AFLAR, uyelikAktif } from "../lib/ayarlar";
 import { benKim } from "../lib/kimlik";
 
 const BOLUMLER = [
@@ -11,24 +11,8 @@ const BOLUMLER = [
     etiket: "VIP Paketleri",
     baslik: "Rütbeler",
     aciklama:
-      "Dört paket var, hepsi tek seferlik ödemeyle alınır. Üst paketler alt paketlerin tüm ayrıcalıklarını kapsar.",
+      "VIP paketleri ve Raid Alert, hepsi tek seferlik ödemeyle alınır. MVP ve Sponsor alt paketlerin tüm ayrıcalıklarını kapsar.",
     urunler: PAKETLER,
-  },
-  {
-    id: "kasa",
-    etiket: "Kasalar",
-    baslik: "Kasa anahtarları",
-    aciklama:
-      "Aldığın anahtar sandığına düşer. Etkinleştirdiğin an oyun içinde hesabına tanımlanır, dilediğin zaman açarsın.",
-    urunler: KASALAR,
-  },
-  {
-    id: "kit",
-    etiket: "Set Kitleri",
-    baslik: "Set kitleri",
-    aciklama:
-      "Komple setler. Sandıktan etkinleştirdiğinde doğrudan oyun içi envanterine gönderilir — oyunda olman yeterli.",
-    urunler: KITLER,
   },
   {
     id: "af",
