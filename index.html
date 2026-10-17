@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FarexHub</title>
+<meta name="description" content="FarexHub topluluğuna Discord üzerinden katıl.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='black'/><path d='M28 20h48v14H44v12h26v14H44v20H28z' fill='%23e10600'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #000000;
+    --ink: #0a0000;
+    --red: #e10600;
+    --red-deep: #7a0300;
+    --ember: #ff3b1f;
+    --bone: #f3ece8;
+    --ash: #8c7f7b;
+    --x: 50%;
+    --y: 50%;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--black);
+    color: var(--bone);
+    font-family: "Barlow", "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Red light that follows the cursor */
+  .glow {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(520px circle at var(--x) var(--y), rgba(225, 6, 0, 0.28), transparent 60%),
+      radial-gradient(1200px 600px at 50% 120%, rgba(122, 3, 0, 0.55), transparent 70%);
+    pointer-events: none;
+    transition: background 0.08s linear;
+  }
+
+  /* Fine scanlines + grain */
+  .grain {
+    position: fixed;
+    inset: -50%;
+    pointer-events: none;
+    opacity: 0.09;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 0.8s steps(4) infinite;
+  }
+  .scan {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px);
+  }
+
+  @keyframes grain {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-3%, 2%); }
+    50% { transform: translate(2%, -3%); }
+    75% { transform: translate(-2%, -1%); }
+    100% { transform: translate(1%, 3%); }
+  }
+
+  main {
+    position: relative;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1.25rem;
+    text-align: center;
+  }
+
+  .stack { display: grid; justify-items: center; gap: clamp(1.75rem, 4vw, 2.75rem); }
+
+  /* The wordmark — the one loud thing on the page */
+  .mark {
+    position: relative;
+    font-family: "Big Shoulders Display", "Impact", "Arial Narrow", sans-serif;
+    font-weight: 900;
+    font-size: clamp(3.6rem, 15vw, 13rem);
+    line-height: 0.82;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--bone);
+    user-select: none;
+  }
+  .mark .tld { color: var(--red); }
+
+  .mark::before,
+  .mark::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .mark::before {
+    color: var(--red);
+    mix-blend-mode: screen;
+    clip-path: inset(0 0 0 0);
+    transform: translateX(0);
+    opacity: 0;
+  }
+  .mark::after {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(225, 6, 0, 0.55);
+    transform: translate(0.06em, 0.06em);
+    z-index: -1;
+  }
+
+  /* One orchestrated entrance: wordmark slices in, then a glitch flicker */
+  .mark { animation: rise 0.9s cubic-bezier(.2,.8,.2,1) both; }
+  .mark::before { animation: glitch 0.6s 0.9s steps(2) 1 both, idle 6s 2.5s infinite; }
+
+  @keyframes rise {
+    from { clip-path: inset(0 0 100% 0); transform: translateY(0.15em); }
+    to   { clip-path: inset(0 0 0 0);    transform: translateY(0); }
+  }
+  @keyframes glitch {
+    0%   { opacity: 1; clip-path: inset(10% 0 70% 0); transform: translateX(-0.04em); }
+    25%  { opacity: 1; clip-path: inset(55% 0 20% 0); transform: translateX(0.05em); }
+    50%  { opacity: 1; clip-path: inset(30% 0 45% 0); transform: translateX(-0.02em); }
+    75%  { opacity: 1; clip-path: inset(80% 0 5% 0);  transform: translateX(0.03em); }
+    100% { opacity: 0; clip-path: inset(0 0 0 0);     transform: translateX(0); }
+  }
+  @keyframes idle {
+    0%, 94%, 100% { opacity: 0; }
+    95% { opacity: 1; clip-path: inset(40% 0 42% 0); transform: translateX(0.04em); }
+    97% { opacity: 1; clip-path: inset(12% 0 75% 0); transform: translateX(-0.03em); }
+  }
+
+  .line {
+    width: clamp(3rem, 10vw, 6rem);
+    height: 3px;
+    background: var(--red);
+    box-shadow: 0 0 18px var(--red);
+    animation: fade 0.6s 1.2s both;
+  }
+
+  /* Discord invite */
+  .invite {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--red-deep);
+    background: rgba(10, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    animation: fade 0.6s 1.35s both;
+  }
+  .invite a,
+  .invite button {
+    font: inherit;
+    color: inherit;
+    text-decoration: none;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .invite a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.95rem 1.4rem;
+    font-weight: 600;
+    font-size: clamp(1rem, 2.4vw, 1.25rem);
+    letter-spacing: 0.01em;
+    transition: background 0.2s, color 0.2s;
+  }
+  .invite a svg { width: 1.4em; height: 1.4em; fill: var(--red); transition: fill 0.2s; }
+  .invite a:hover { background: var(--red); color: var(--black); }
+  .invite a:hover svg { fill: var(--black); }
+
+  .invite button {
+    padding: 0 1.1rem;
+    border-left: 1px solid var(--red-deep);
+    color: var(--ash);
+    font-size: 0.9rem;
+    min-width: 5.5rem;
+    transition: color 0.2s, background 0.2s;
+  }
+  .invite button:hover { color: var(--bone); background: rgba(225, 6, 0, 0.12); }
+  .invite button.done { color: var(--ember); }
+
+  .actions { display: grid; gap: 0.75rem; justify-items: stretch; }
+
+  .shop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.4rem;
+    background: var(--red);
+    color: var(--black);
+    text-decoration: none;
+    font-family: "Big Shoulders Display", "Impact", "Arial Narrow", sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.4rem, 3.4vw, 1.8rem);
+    letter-spacing: 0.02em;
+    line-height: 1;
+    box-shadow: 0 0 0 rgba(225, 6, 0, 0);
+    transition: box-shadow 0.25s, background 0.2s;
+    animation: fade 0.6s 1.45s both;
+  }
+  .shop svg { width: 0.95em; height: 0.95em; fill: currentColor; }
+  .shop:hover { background: var(--ember); box-shadow: 0 0 32px rgba(225, 6, 0, 0.6); }
+
+  @media (max-width: 480px) {
+    .actions { width: 100%; max-width: 20rem; }
+  }
+
+  .top {
+    position: fixed; top: 0; right: 0; z-index: 5;
+    padding: calc(1.1rem + env(safe-area-inset-top, 0px)) 1.25rem 1rem;
+    animation: fade 0.6s 1.5s both;
+  }
+  .top a {
+    display: inline-block; padding: 0.6rem 1.1rem;
+    border: 1px solid var(--red-deep); background: rgba(10,0,0,.7);
+    color: var(--bone); text-decoration: none; font-weight: 600; font-size: 0.95rem;
+    transition: background .2s, color .2s;
+  }
+  .top a:hover { background: var(--red); color: var(--black); }
+
+  :focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+
+  footer {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--ash);
+    opacity: 0.7;
+    animation: fade 0.6s 1.5s both;
+  }
+
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  @media (max-width: 480px) {
+    .invite { flex-direction: column; width: 100%; max-width: 20rem; }
+    .invite a { justify-content: center; }
+    .invite button { border-left: 0; border-top: 1px solid var(--red-deep); padding: 0.75rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .mark::before { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <nav class="top"><a id="acct" href="giris.html">Giriş yap</a></nav>
+
+  <main>
+    <div class="stack">
+      <h1 class="mark" data-text="FAREXHUB.COM">Farexhub<span class="tld">.com</span></h1>
+      <div class="line" aria-hidden="true"></div>
+      <div class="actions">
+      <div class="invite">
+        <a href="https://discord.gg/farexhub" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.4C.6 9 0 13.6.3 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1c-.7-.3-1.4-.6-2-1l.5-.4a14.2 14.2 0 0 0 12 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.8-3.6-13.7zM8.5 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm7 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>
+          discord.gg/farexhub
+        </a>
+        <button type="button" id="copy" aria-label="Davet bağlantısını kopyala">Kopyala</button>
+      </div>
+      <a class="shop" href="magaza.html">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7V6a5 5 0 0 1 10 0v1h3l-1.2 14H5.2L4 7h3zm2 0h6V6a3 3 0 0 0-6 0v1z"/></svg>
+        Mağaza
+      </a>
+      </div>
+    </div>
+  </main>
+
+  <footer>© <span id="yr"></span> FarexHub</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // Cursor-following red light
+  const root = document.documentElement;
+  const move = (x, y) => {
+    root.style.setProperty('--x', x + 'px');
+    root.style.setProperty('--y', y + 'px');
+  };
+  window.addEventListener('pointermove', e => move(e.clientX, e.clientY), { passive: true });
+  window.addEventListener('touchmove', e => {
+    const t = e.touches[0]; if (t) move(t.clientX, t.clientY);
+  }, { passive: true });
+
+  // Copy invite
+  const btn = document.getElementById('copy');
+  btn.addEventListener('click', async () => {
+    const link = 'https://discord.gg/farexhub';
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = link; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch {}
+      ta.remove();
+    }
+    btn.textContent = 'Kopyalandı';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = 'Kopyala'; btn.classList.remove('done'); }, 1800);
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+  if (window.sb) window.sb.auth.getSession().then(({ data }) => {
+    if (data.session) { const a = document.getElementById('acct'); a.textContent = 'Hesabım'; a.href = 'hesap.html'; }
+  }).catch(() => {});
+</script>
+</body>
+</html>

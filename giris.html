@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Giriş yap · FarexHub</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='black'/><path d='M28 20h48v14H44v12h26v14H44v20H28z' fill='%23e10600'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="auth.css">
+</head>
+<body>
+<main>
+  <a class="brand" href="index.html">Farexhub<span>.com</span></a>
+
+  <div class="panel">
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" id="tab-login" aria-selected="true" aria-controls="form-login">Giriş yap</button>
+      <button role="tab" id="tab-signup" aria-selected="false" aria-controls="form-signup">Kayıt ol</button>
+    </div>
+
+    <!-- Giriş -->
+    <form id="form-login" novalidate>
+      <div class="msg" id="msg-login" role="status"></div>
+      <label>E-posta
+        <input type="email" name="email" autocomplete="email" required>
+      </label>
+      <label>Şifre
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn" type="submit">Giriş yap</button>
+      <button class="link" type="button" id="to-forgot">Şifremi unuttum</button>
+    </form>
+
+    <!-- Kayıt -->
+    <form id="form-signup" hidden novalidate>
+      <div class="msg" id="msg-signup" role="status"></div>
+      <label>Kullanıcı adı
+        <input type="text" name="username" autocomplete="username" minlength="3" maxlength="20" required>
+        <span class="hint">3–20 karakter; harf, rakam ve alt çizgi.</span>
+      </label>
+      <label>E-posta
+        <input type="email" name="email" autocomplete="email" required>
+      </label>
+      <label>Şifre
+        <input type="password" name="password" autocomplete="new-password" minlength="6" required>
+        <span class="hint">En az 6 karakter.</span>
+      </label>
+      <label>Şifre tekrar
+        <input type="password" name="password2" autocomplete="new-password" required>
+      </label>
+      <button class="btn" type="submit">Hesap oluştur</button>
+    </form>
+
+    <!-- Şifre sıfırlama isteği -->
+    <form id="form-forgot" hidden novalidate>
+      <div class="msg" id="msg-forgot" role="status"></div>
+      <p class="hint" style="font-size:.95rem">E-posta adresini yaz, şifreni yenilemen için bir bağlantı gönderelim.</p>
+      <label>E-posta
+        <input type="email" name="email" autocomplete="email" required>
+      </label>
+      <button class="btn" type="submit">Bağlantı gönder</button>
+      <button class="link" type="button" id="back-login">Girişe dön</button>
+    </form>
+
+    <!-- Yeni şifre (e-postadaki bağlantıdan gelince) -->
+    <form id="form-reset" hidden novalidate>
+      <div class="msg" id="msg-reset" role="status"></div>
+      <label>Yeni şifre
+        <input type="password" name="password" autocomplete="new-password" minlength="6" required>
+      </label>
+      <label>Yeni şifre tekrar
+        <input type="password" name="password2" autocomplete="new-password" required>
+      </label>
+      <button class="btn" type="submit">Şifreyi kaydet</button>
+    </form>
+  </div>
+
+  <a class="back" href="index.html">Ana sayfaya dön</a>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const forms = { login: $('form-login'), signup: $('form-signup'), forgot: $('form-forgot'), reset: $('form-reset') };
+
+  function show(name) {
+    Object.entries(forms).forEach(([k, f]) => f.hidden = k !== name);
+    $('tabs').hidden = name === 'reset';
+    $('tab-login').setAttribute('aria-selected', name === 'login' || name === 'forgot');
+    $('tab-signup').setAttribute('aria-selected', name === 'signup');
+    Object.keys(forms).forEach(k => setMsg(k, ''));
+  }
+  function setMsg(name, text, ok = false) {
+    const m = $('msg-' + name);
+    m.textContent = text;
+    m.classList.toggle('ok', ok);
+  }
+  function busy(form, on) {
+    const b = form.querySelector('.btn');
+    b.disabled = on;
+  }
+
+  // Supabase'in İngilizce hata mesajlarını Türkçeleştir
+  function tr(err) {
+    const m = (err && err.message || '').toLowerCase();
+    if (m.includes('invalid login credentials')) return 'E-posta veya şifre hatalı.';
+    if (m.includes('email not confirmed')) return 'E-postanı henüz onaylamadın. Gelen kutunu kontrol et.';
+    if (m.includes('already registered')) return 'Bu e-posta ile zaten bir hesap var.';
+    if (m.includes('database error saving new user')) return 'Bu kullanıcı adı alınmış, başka bir tane dene.';
+    if (m.includes('password should be at least')) return 'Şifre en az 6 karakter olmalı.';
+    if (m.includes('unable to validate email') || m.includes('invalid email')) return 'Geçerli bir e-posta adresi yaz.';
+    if (m.includes('rate limit') || m.includes('too many')) return 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.';
+    if (m.includes('same as the old')) return 'Yeni şifre eskisiyle aynı olamaz.';
+    return 'Bir hata oluştu: ' + (err && err.message || 'bilinmeyen hata');
+  }
+
+  $('tab-login').onclick = () => show('login');
+  $('tab-signup').onclick = () => show('signup');
+  $('to-forgot').onclick = () => show('forgot');
+  $('back-login').onclick = () => show('login');
+  if (location.hash === '#kayit') show('signup');
+
+  const sb = window.sb;
+  if (!sb) {
+    setMsg('login', 'Supabase bağlantısı ayarlanmamış. config.js dosyasına proje URL’ni ve anon anahtarını ekle.');
+  } else {
+    // Şifre sıfırlama bağlantısından gelindiyse yeni şifre formunu aç
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') show('reset');
+    });
+    // Zaten giriş yapılmışsa hesaba yönlendir
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session && !location.hash.includes('type=recovery')) location.replace('hesap.html');
+    });
+  }
+
+  // Giriş
+  forms.login.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!sb) return;
+    const f = e.target;
+    const email = f.email.value.trim(), password = f.password.value;
+    if (!email || !password) return setMsg('login', 'E-posta ve şifreni yaz.');
+    busy(f, true); setMsg('login', '');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    busy(f, false);
+    if (error) return setMsg('login', tr(error));
+    location.replace('hesap.html');
+  });
+
+  // Kayıt
+  forms.signup.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!sb) return setMsg('signup', 'Supabase bağlantısı ayarlanmamış.');
+    const f = e.target;
+    const username = f.username.value.trim();
+    const email = f.email.value.trim();
+    const password = f.password.value, password2 = f.password2.value;
+
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return setMsg('signup', 'Kullanıcı adı 3–20 karakter olmalı ve sadece harf, rakam, alt çizgi içermeli.');
+    if (!email) return setMsg('signup', 'E-posta adresini yaz.');
+    if (password.length < 6) return setMsg('signup', 'Şifre en az 6 karakter olmalı.');
+    if (password !== password2) return setMsg('signup', 'Şifreler birbiriyle aynı değil.');
+
+    busy(f, true); setMsg('signup', '');
+
+    // Kullanıcı adı alınmış mı?
+    const { data: taken } = await sb.from('profiles').select('id')
+      .ilike('username', username.replace(/_/g, '\\_')).limit(1);
+    if (taken && taken.length) { busy(f, false); return setMsg('signup', 'Bu kullanıcı adı alınmış, başka bir tane dene.'); }
+
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: {
+        data: { username },
+        emailRedirectTo: location.origin + '/hesap.html'
+      }
+    });
+    busy(f, false);
+    if (error) return setMsg('signup', tr(error));
+
+    // Supabase, kayıtlı e-postalar için hata yerine boş kimlikli kullanıcı döner
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      return setMsg('signup', 'Bu e-posta ile zaten bir hesap var.');
+    }
+    if (data.session) return location.replace('hesap.html');
+    f.reset();
+    setMsg('signup', 'Hesabın oluşturuldu. ' + email + ' adresine gelen bağlantıyla e-postanı onayla, sonra giriş yapabilirsin.', true);
+  });
+
+  // Şifre sıfırlama bağlantısı
+  forms.forgot.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!sb) return;
+    const f = e.target, email = f.email.value.trim();
+    if (!email) return setMsg('forgot', 'E-posta adresini yaz.');
+    busy(f, true);
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/giris.html' });
+    busy(f, false);
+    if (error) return setMsg('forgot', tr(error));
+    setMsg('forgot', 'Bu e-postayla bir hesap varsa şifre yenileme bağlantısı gönderildi.', true);
+  });
+
+  // Yeni şifreyi kaydet
+  forms.reset.addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    if (f.password.value.length < 6) return setMsg('reset', 'Şifre en az 6 karakter olmalı.');
+    if (f.password.value !== f.password2.value) return setMsg('reset', 'Şifreler birbiriyle aynı değil.');
+    busy(f, true);
+    const { error } = await sb.auth.updateUser({ password: f.password.value });
+    busy(f, false);
+    if (error) return setMsg('reset', tr(error));
+    setMsg('reset', 'Şifren güncellendi. Hesabına yönlendiriliyorsun…', true);
+    setTimeout(() => location.replace('hesap.html'), 1200);
+  });
+</script>
+</body>
+</html>
